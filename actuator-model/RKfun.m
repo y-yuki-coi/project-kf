@@ -1,6 +1,6 @@
 function [dy Fgi dt2_xi] = RKfun(y0,isRefresh)
 
-global g mi li Ii bi ki yg y_contact
+global g mi li Ii bi ki yg y_contact u0 Gi
 
 xi = y0(1:8) ; dt_xi = y0(9:16) ; 
 
@@ -35,30 +35,30 @@ if 1 % 1: GRF exist 0: no GRF
         if y_contact(1,9) ~= 0 % not initial & keep contact
             yr0 = yg ; % Y0(t_contact,10)-(l3/2)*sin(Y0(t_contact,11)) ; % ground y
             xr0 = y_contact(1,3)+(l2/2)*cos(y_contact(1,5)) ; % ground x
-            Fgi(1) = -kg*(xr-xr0) - bg*dt_xr ;
-            Fgi(2) = -kg*(yr-yr0) + bg*f_max(-dt_yr) ;
         else % first contact in one cycle
             if isRefresh == 1 % Update
                 y_contact(1,1:9) = [xi(1:8) 1] ;
             end
-            Fgi(1:2) = 0 ;
+            yr0 = yr ; xr0 = xr ;
         end
+        Fgi(1) = -kg*(xr-xr0) - bg*dt_xr ;
+        Fgi(2) = -kg*(yr-yr0) + bg*f_max(-dt_yr) ;
     else Fgi(1:2) = 0 ; % non-contact
         y_contact(1,1:15) = zeros(1,15) ;
     end
     
-    if yl < yg % contact 
+    if yl < yg % contact
         if y_contact(2,9) ~= 0 % not initial & keep contact
             yl0 = yg ; % ground y
             xl0 = y_contact(2,6)+(l2/2)*cos(y_contact(2,8)) ; % ground x
-            Fgi(3) = -kg*(xl-xl0) - bg*dt_xl ;
-            Fgi(4) = -kg*(yl-yl0) + bg*f_max(-dt_yl) ;
         else % first contact in one cycle
-            if isRefresh == 1 % Update 
+            if isRefresh == 1 % Update
                 y_contact(2,1:9) = [xi(1:8) 1] ;
             end
-            Fgi(3:4) = 0 ;
+            yl0 = yl ; xl0 = xl ;
         end
+        Fgi(3) = -kg*(xl-xl0) - bg*dt_xl ;
+        Fgi(4) = -kg*(yl-yl0) + bg*f_max(-dt_yl) ;
     else Fgi(3:4) = 0 ; % non-contact
         y_contact(2,1:9) = zeros(1,9) ;
     end
@@ -66,7 +66,49 @@ if 1 % 1: GRF exist 0: no GRF
 end
 
 % Actuator force -----------------------------------------------------------------------------------
-Fai = zeros(2,1);% どのようにアクチュエータの入力を作るかは未定
+% Mobility 
+% u0がx方向の目標速度とする
+eps1 = 10^(-5) ; eps2 = 10^(-5) ; % 零の除算を避けるための微小量 
+vd = [u0 0] ; % 目標速度
+if 1 % 1: Mobility control
+    ex1 = [-cos(th2) sin(th2)];
+    ex2 = [-cos(th3) sin(th3)];
+    % right leg
+    vdl(1,1:2) = dot(ex1,vd)*ex1 ; % 局所速度ベクトル（本来寄与できるベクトル）
+    vdr(1,1:2) = vd - vdl(1,1:2) ; % 本来寄与できない速度ベクトル
+    vdc(2,1:2) = dot(ex2,vdr(1,1:2))*ex2 ; % 左に対して右が寄与できる配分
+    if sum(Fgi(1:2)) == 0 % non-contact 
+        k(1) = 0 ; 
+    else % contact
+        k(1) = exp(-4*log2(norm(vdl(1,1:2)-vd)+eps1)/(norm(vdl(1,1:2))+eps2)) ; % 動きやすさ指標
+    end
+    % left leg
+    vdl(2,1:2) = dot(ex2,vd)*ex2 ; % 局所速度ベクトル（本来寄与できるベクトル）
+    vdr(2,1:2) = vd - vdl(2,1:2) ; % 本来寄与できない速度ベクトル
+    vdc(1,1:2) = dot(ex1,vdr(2,1:2))*ex1 ; % 右に対して左が寄与できる配分
+    if sum(Fgi(3:4)) == 0 % non-contact left
+        k(2) = 0 ;
+        Fai(2) = 0 ;
+    else Fgi(3:4) = 0 ; % contact
+        k(2) = exp(-4*log2(norm(vdl(2,1:2)-vd)+eps1)/(norm(vdl(2,1:2))+eps2)) ; % 動きやすさ指標
+    end
+    vd_childa(1,1:2) = (1-k(2))*vdl(1,1:2) + k(2)*vdc(1,1:2); % 右に対するVdの配分
+    vd_childa(2,1:2) = (1-k(1))*vdl(2,1:2) + k(1)*vdc(2,1:2); % 左に対するVdの配分
+    % 出力へ変換 
+    % 力は1次元だが、速度は2次元なので、不良設定問題？：しかし力と速度の方向は同じなので絶対値で計算
+    vi(1) = sqrt(dt_x2^2+dt_y2^2) ; 
+    vi(2) = sqrt(dt_x3^2+dt_y3^2) ; 
+    for i = 1:2
+        if k(i) ~= 0  
+            Fai(i) = Gi*(norm(vd_childa(i,1:2))-vi(i)) ;
+        else
+            Fai(i) = 0 ;
+        end
+    end
+else % どのようにアクチュエータの入力を作るか未定の場合
+    Fai = zeros(2,1);
+end
+
 Fa2 = Fai(1) ; Fa3 = Fai(2) ;
 
 % bipedal_model -----------------------------------------------------------------------------------
