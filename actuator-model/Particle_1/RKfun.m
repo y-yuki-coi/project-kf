@@ -95,7 +95,7 @@ if 1 % 1: Mobility control
     if sum(Fgi(1:2)) == 0 % non-contact 
        k(1) = 0 ; 
     else % contact
-        k(1) = exp(-4*log2(norm(vdl(1,1:2)-vi(1)*ex1)^2+eps1)/(norm(vdl(1,1:2))^2+eps2)) ; % vdlとviの符号が逆だと1を超える
+        k(1) = exp(-4*log(2*(norm(vdl(1,1:2)-vi(1)*ex1)^2+eps1)/(norm(vdl(1,1:2))^2+eps2))) ; % vdlとviの符号が逆だと1を超える
         if k(1) >= 1 ; k(1) = 1; end
     end
     % left leg
@@ -107,7 +107,7 @@ if 1 % 1: Mobility control
 %     if sum(Fgi(3:4)) == 0 % non-contact left
 %        k(2) = 0 ;
 %     else Fgi(3:4) = 0 ; % contact
-        k(2) = exp(-4*log2(norm(vdl(2,1:2)-vi(2)*ex2)^2+eps1)/(norm(vdl(2,1:2))^2+eps2)) ; % 伸縮速度dt_l3でなく現在速度を入れた
+        k(2) = exp(-4*log(2*(norm(vdl(2,1:2)-vi(2)*ex2)^2+eps1)/(norm(vdl(2,1:2))^2+eps2))) ; % 伸縮速度dt_l3でなく現在速度を入れた
         if k(2) >= 1 ; k(2) = 1; end
 %     end
     % Top
@@ -116,7 +116,7 @@ if 1 % 1: Mobility control
     vdc(3,1:2,1) = dot(ex1,vdr(3,1:2))*ex2 ; % 右に対して上が寄与できる配分
     vdc(3,1:2,2) = dot(ex2,vdr(3,1:2))*ex3 ; % 左に対して上が寄与できる配分
     vi(3) = dot([dt_x1,dt_y1],ex3); % 脚間に沿った現在速度
-    k(3) = exp(-4*log2(norm(vdl(3,1:2)-vi(3)*ex3)^2+eps1)/(norm(vdl(3,1:2))^2+eps2)) ; % 伸縮速度dt_l1でなく現在速度を入れた
+    k(3) = exp(-4*log(2*(norm(vdl(3,1:2)-vi(3)*ex3)^2+eps1)/(norm(vdl(3,1:2))^2+eps2))) ; % 伸縮速度dt_l1でなく現在速度を入れた
     if k(3) >= 1 ; k(3) = 1; end
     vd_childa(1,1:2) = (1-k(2))*(1-k(3))*vdl(1,1:2) + k(2)*vdc(2,1:2,1) + k(3)*vdc(3,1:2,1) ; % 右に対するVdの配分 この時点でスカラーにするべき？
     vd_childa(2,1:2) = (1-k(1))*(1-k(3))*vdl(2,1:2) + k(1)*vdc(1,1:2,2) + k(3)*vdc(3,1:2,2); % 左に対するVdの配分 この時点でスカラーにするべき？
@@ -125,6 +125,7 @@ if 1 % 1: Mobility control
     vdi(1) = dot(vd_childa(1,1:2),ex1) ; % 出力方向に変換
     vdi(2) = dot(vd_childa(2,1:2),ex2) ; % 出力方向に変換
     vdi(3) = dot(vd_childa(3,1:2),ex3) ;
+    k
     for i = 1:3
         tmp = Gi*(vdi(i)-vi(i)) ;
 %         Fai(i) = tmp ;

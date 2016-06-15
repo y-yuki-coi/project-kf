@@ -76,7 +76,8 @@ figure(1)
 set(gcf,'Color',[1 1 1]) ;
 skip = 1 ;
 nn = 1 ; % mov index
-v = VideoWriter('Particle_Mobility_160612.mp4','MPEG-4');
+         %v = VideoWriter('Particle_Mobility_160612.mp4','MPEG-4');
+v = VideoWriter('Particle_Mobility_160612.avi');
 open(v)
 for frame = 1:skip:t%length(time) 
     plot(xi(frame,[1 3]),xi(frame,[2 4]),'ro-',xi(frame,[1 5]),xi(frame,[2 6]),'bo-',xi(frame,[3 5]),xi(frame,[4 6]),'ko-'); hold on;
