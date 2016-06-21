@@ -38,7 +38,7 @@ Y = [xi zeros(1,8)] ; % dt_xi(8)
 tic;
 % options = odeset('RelTol',1e-4,'AbsTol',repmat(1e-4,1,52));
 % [time,Y] = ode45(@odefun_Taga1991,[0 2],Y0,options) ;
-iter = 500 ; 
+iter = 100 ; 
 Y = [Y;zeros(iter,16)]; Fgi=zeros(iter,4); dt2_xi = zeros(iter,8);
 for t = 1:iter
     [Y(t+1,:) Fgi(t,:) dt2_xi(t,:)] = fun_Actuator(Y(t,:)); 
@@ -69,9 +69,10 @@ end
 if 1
 figure(1)
 set(gcf,'Color',[1 1 1]) ;
-skip = 5 ;
+skip = 1 ;
 nn = 1 ; % mov index
-
+v = VideoWriter('Actuator_160419.mp4','MPEG-4');
+open(v)
 for frame = 1:skip:t%length(time) 
     plot(jti(frame,[1 5]),jti(frame,[2 6]),'bo-',jti(frame,[1 3]),jti(frame,[2 4]),'ro-'); hold on;% êgëÃ
     plot(xi(frame,3),xi(frame,4),'rs','markerfacecolor','r');
@@ -87,6 +88,6 @@ for frame = 1:skip:t%length(time)
     nn = nn+1;
     drawnow
 end
-
-movie2avi(mov,'Taga1991_151209','compression','None');
+writeVideo(v,mov)
+close(v)
 end
