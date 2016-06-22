@@ -40,7 +40,7 @@ tic;
 % options = odeset('RelTol',1e-4,'AbsTol',repmat(1e-4,1,52));
 % [time,Y] = ode45(@odefun_Taga1991,[0 2],Y0,options) ;
 iter =2000 ; 
-Y = [Y;zeros(iter,12)]; var1=zeros(iter,6); var2 = zeros(iter,6);
+Y = [Y;zeros(iter,12)]; var1=zeros(iter,6); var2 = zeros(iter,9);
 for t = 1:iter
     [Y(t+1,:) var1(t,:) var2(t,:)] = fun_Actuator(Y(t,:)); 
 %     [Y(t+1,:) Fgi(t,:) dt2_xi(t,:) Tri(t,:)] = fun_Neural_Taga1991(Y(t,:)); 
@@ -90,9 +90,9 @@ for frame = 1:skip:t%length(time)
     xlim([-1 3]) ;
     ylim([-0.5 2]) ; 
     hold off ;
-    title(sprintf('time = %0.2f (s) k1 = %0.2f k2 = %0.2f k3 = %0.2f',time(frame),...
-        var2(frame,4),var2(frame,5),var2(frame,6)),'fontsize',12);
-    set(gca,'fontsize',12) ;
+    title(sprintf('time = %0.2f (s) k1 = %0.2f k2 = %0.2f k3 = %0.2f kf2 = %0.2f kf3 = %0.2f',time(frame),...
+        var2(frame,4),var2(frame,5),var2(frame,6),var2(frame,8),var2(frame,9)),'fontsize',8);
+    set(gca,'fontsize',10) ;
     mov(nn)= getframe(gcf); % mov index
     nn = nn+1;
     drawnow
