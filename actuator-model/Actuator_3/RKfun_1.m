@@ -1,5 +1,7 @@
 function [dy var1 var2] = RKfun(y0,isRefresh) % Fgi dt2_xi l_vec th
-
+% 20160617ì¬
+% th1‚ÌŠp“x‚Ì’è‹`A¶‰E‹r‚Ì’n–Ê”½—Í‚É‚æ‚é•ªŠò‚ª‹ti3•à‘–‚ê‚½‚Ì‚Å‚»‚Ì‚Ü‚Ü‚É‚µ‚Ä‚¢‚éj
+% “®‚«‚â‚·‚³k‚Ì’è‹`‚ª”÷–­‚¾‚ª‚»‚Ì‚Ü‚Ü‚É‚µ‚Ä‚¢‚éiver3‚ÅC³j
 global g mi li ki yg y_contact u0 Gi bi % Ii
 
 xi = y0(1:6) ; dt_xi = y0(7:12) ; 
@@ -25,7 +27,18 @@ dt_l1 = 1/2*l1^(-1/2)*(2*(x2-x3)*(dt_x2-dt_x3)+2*(y2-y3)*(dt_y2-dt_y3)) ; % ”÷•ª
 dt_l2 = 1/2*l2^(-1/2)*(2*(x2-x1)*(dt_x2-dt_x1)+2*(y2-y1)*(dt_y2-dt_y1)) ; 
 dt_l3 = 1/2*l3^(-1/2)*(2*(x1-x3)*(dt_x1-dt_x3)+2*(y1-y3)*(dt_y1-dt_y3)) ; 
 l_vec = [l1 l2 l3 dt_l1 dt_l2 dt_l3] ;
-th1 = acos((x3-x2)/l1) ; 
+% th1 = acos((x3-x2)/l1) ; 
+if x2 >= x3
+    if y2 >= y3
+        th1 = acos((x3-x2)/l1) ;
+    else th1 = 2*pi-acos((x3-x2)/l1) ;
+    end
+else
+    if y2 >= y3
+        th1 = acos((x2-x3)/l1) ;
+    else th1 = 2*pi-acos((x2-x3)/l1) ;
+    end
+end
 th2 = acos((x2-x1)/l2) ; 
 th3 = acos((x3-x1)/l3) ; 
 th = [th1 th2 th3]/pi*180 ;
@@ -99,7 +112,7 @@ if 1 % 1: Mobility control
         k(2) = exp(-4*log(2)*(norm(vdl(2,1:2)-dt_l2*ex2)^2+eps1)/(norm(vdl(2,1:2))^2+eps2)) ; % 1‚ð’´‚¦‚È‚¢‚æ‚¤‚ÉÝŒv‚³‚ê‚Ä‚¢‚é
 % end
     % figure(1); plot(0:0.01:1,exp(-4*log(2).*[0:0.01:1])) % check
-    % “|‚ê‚â‚·‚³
+    % “|‚ê‚â‚·‚³ â‘Î’l‚ª‘å‚«‚¢‚Ù‚Ç“|‚ê‚â‚·‚¢H
     kf(2) = sqrt(g/l2)*(x2-x1)/(dt_x1+eps3) ; % Kagawa & Uno 2010
 %     kf(2) = sign(kf(2))*exp(-4*log(2)*kf(2)) ;
     if abs(kf(2)) > 1 ; kf(2) = sign(kf(2)) ; end
@@ -114,17 +127,17 @@ if 1 % 1: Mobility control
 %     else Fgi(3:4) = 0 ; % contact
         k(3) = exp(-4*log(2)*(norm(vdl(3,1:2)-dt_l2*ex3)^2+eps1)/(norm(vdl(3,1:2))^2+eps2)) ; % 
 %     end
-    % “|‚ê‚â‚·‚³
+    % “|‚ê‚â‚·‚³ ‘å‚«‚¢‚Ù‚Ç“|‚ê‚â‚·‚¢
     kf(3) = sqrt(g/l3)*(x3-x1)/(dt_x1+eps3) ; % Kagawa & Uno 2010
 %     kf(3) = sign(kf(3))*exp(-4*log(2)*kf(3)) ;
     if abs(kf(3)) > 1 ; kf(3) = sign(kf(3)) ; end
     % Hip
     vi(1) = dt_l1; % ‹rŠÔ‚É‰ˆ‚Á‚½Œ»Ý‘¬“x
-    if sum(Fgi(2)) == 0 && sum(Fgi(4)) ~= 0% ‰E‹r‚ª’…’n: ex1‚ª‹t‚É‚È‚é‚±‚Æ‚É’ˆÓ
+    if sum(Fgi(4)) == 0 && sum(Fgi(2)) ~= 0% ¶‹r‚ª’…’n
         vdl(1,1:2) = dot(ex1_pr,vd)*ex1_pr; % ‹ÇŠ‘¬“xƒxƒNƒgƒ‹i–{—ˆŠñ—^‚Å‚«‚éƒxƒNƒgƒ‹j
         k(1) = exp(-4*log(2)*(norm(vdl(1,1:2)-dt_l1*ex1_pr)^2+eps1)/(norm(vdl(1,1:2))^2+eps2)) ; % 
         vdr(1,1:2) = vd - vdl(1,1:2) ; % ‚±‚ÌŠÖß‚ª¶¬‚Å‚«‚È‚¢‘¬“xƒxƒNƒgƒ‹
-    elseif sum(Fgi(4)) == 0 && sum(Fgi(2)) ~= 0% ¶‹r‚ª’…’n
+    elseif sum(Fgi(2)) == 0 && sum(Fgi(4)) ~= 0% ‰E‹r‚ª’…’n: ex1‚ª‹t‚É‚È‚é‚±‚Æ‚É’ˆÓ
         vdl(1,1:2) = dot(ex1,vd)*ex1 ; % 
         k(1) = exp(-4*log(2)*(norm(vdl(1,1:2)-dt_l1*ex1)^2+eps1)/(norm(vdl(1,1:2))^2+eps2)) ; % 
         vdr(1,1:2) = vd - vdl(1,1:2) ; % ‚±‚ÌŠÖß‚ª¶¬‚Å‚«‚È‚¢‘¬“xƒxƒNƒgƒ‹
@@ -138,10 +151,10 @@ if 1 % 1: Mobility control
     % Ž©g‚Ì“|‚ê‚â‚·‚³‚Íƒ[ƒ
     kf(1) = 0 ;
     % “ñ‹r‚ð•‚¯‚é¬•ªFÚ’n—£’n‚Å•ª—Þ‚·‚é
-    if sum(Fgi(2)) == 0 && sum(Fgi(4)) ~= 0% ‰E‹r‚ª’…’n: ex1‚ª‹t‚É‚È‚é‚±‚Æ‚É’ˆÓ
+    if Fgi(2) == 0 && Fgi(4) ~= 0% ¶‹r‚ª’…’n ‰E‹r‚ª—£’n
         kf2vdc1 = 0 ; 
         kf3vdc1 = kf(3)*vdc(3,1:2,1) ; % x2>x3‚Å‚à‹t‚Å‚àAkf(3)>0‚Å‚à‹t‚Å‚à
-    elseif sum(Fgi(4)) == 0 && sum(Fgi(2)) ~= 0% ¶‹r‚ª’…’n
+    elseif Fgi(4) == 0 && Fgi(2) ~= 0% ‰E‹r‚ª’…’n ¶‹r‚ª—£’n
         kf3vdc1 = 0 ; 
         kf2vdc1 = kf(2)*vdc(2,1:2,1) ; % x2>x3‚Å‚à‹t‚Å‚àAkf(3)>0‚Å‚à‹t‚Å‚à
     else 
@@ -175,8 +188,8 @@ end
 
 Fa1 = (1) ;%0;%
 Fa2 = Fai(2) ; Fa3 = Fai(3) ;
-var1 = l_vec;%[vdl(1,1:2) vdl(2,1:2) vdl(3,1:2)]; 
-var2 = [vi k kf];
+var1 = [l_vec vdl(1,1:2) vdl(2,1:2) vdl(3,1:2) vdc(1,1:2,2) vdc(1,1:2,3) vdc(2,1:2,1) vdc(2,1:2,3) vdc(3,1:2,1) vdc(3,1:2,2)]; 
+
 % bipedal_model -----------------------------------------------------------------------------------
 
 % Generated Torques
@@ -193,18 +206,23 @@ else k_leg2 = k2 ; b_leg2 = b2 ;
 end
 % differential equantion and output
 % ‚±‚Ìƒ_ƒCƒiƒ~ƒNƒX‚Í‡‚Á‚Ä‚¢‚»‚¤iŠm”FÏj
+if x2>=x3
+     costh1 =  cos(th1) ; sinth1 =  sin(th1) ;
+else costh1 = -cos(th1) ; sinth1 = -sin(th1) ;
+end
+var2 = [vi k kf -Fa1*costh1 Fa1*sinth1 -Fa2*cos(th2) Fa2*sin(th2) -Fa3*cos(th3) Fa3*sin(th3) Fgi' th];
 dy = zeros(1,12) ;
 dy(1:6)  = dt_xi ;
 dy(7)  = (- Fa2*cos(th2) - Fa3*cos(th3) ..., % HAT 
                 - k_leg1*(l02-l2)*cos(th2) - k_leg2*(l03-l3)*cos(th3) + b_leg1*dt_l2*cos(th2) + b_leg2*dt_l3*cos(th3))/m1 ;
 dy(8)  = (- m1 * g + Fa2*sin(th2) + Fa3*sin(th3)  .... % 
                 + k_leg1*(l02-l2)*sin(th2) + k_leg2*(l03-l3)*sin(th3) - b_leg1*dt_l2*sin(th2) - b_leg2*dt_l3*sin(th3))/m1 ;
-dy(9)  = (+ Fgx2 - Fa1*cos(th1) + Fa2*cos(th2) ...
-                + k_leg1*(l02-l2)*cos(th2) - k_hip*(l01-l1)*cos(th1) - b_leg1*dt_l2*cos(th2) + b_hip*dt_l1*cos(th1))/m2 ; % Leg_R
-dy(10) = (+ Fgy2 -m2 * g + Fa1*sin(th1) - Fa2*sin(th2) ...
-                - k_leg1*(l02-l2)*sin(th2) + k_hip*(l01-l1)*sin(th1) + b_leg1*dt_l2*sin(th2) - b_hip*dt_l1*sin(th1))/m2 ;
-dy(11) = (+ Fgx3 + Fa1*cos(th1) + Fa3*cos(th3) ...
-                + k_leg2*(l03-l3)*cos(th3) + k_hip*(l01-l1)*cos(th1) - b_leg2*dt_l3*cos(th3) - b_hip*dt_l1*cos(th1))/m2 ; % Leg_L
-dy(12) = (+ Fgy3 -m2 * g - Fa1*sin(th1)- Fa3*sin(th3) ...
-                - k_leg2*(l03-l3)*sin(th3) - k_hip*(l01-l1)*sin(th1) + b_leg2*dt_l3*sin(th3) + b_hip*dt_l1*sin(th1))/m2 ;
+dy(9)  = (+ Fgx2 - Fa1*costh1 + Fa2*cos(th2) ...
+                + k_leg1*(l02-l2)*cos(th2) - k_hip*(l01-l1)*costh1 - b_leg1*dt_l2*cos(th2) + b_hip*dt_l1*costh1)/m2 ; % Leg_R
+dy(10) = (+ Fgy2 -m2 * g + Fa1*sinth1 - Fa2*sin(th2) ...
+                - k_leg1*(l02-l2)*sin(th2) + k_hip*(l01-l1)*sinth1 + b_leg1*dt_l2*sin(th2) - b_hip*dt_l1*sinth1)/m2 ;
+dy(11) = (+ Fgx3 + Fa1*costh1 + Fa3*cos(th3) ...
+                + k_leg2*(l03-l3)*cos(th3) + k_hip*(l01-l1)*costh1 - b_leg2*dt_l3*cos(th3) - b_hip*dt_l1*costh1)/m2 ; % Leg_L
+dy(12) = (+ Fgy3 -m2 * g - Fa1*sinth1- Fa3*sin(th3) ...
+                - k_leg2*(l03-l3)*sin(th3) - k_hip*(l01-l1)*sinth1 + b_leg2*dt_l3*sin(th3) + b_hip*dt_l1*sinth1)/m2 ;
 dt2_xi = dy(7:12) ;

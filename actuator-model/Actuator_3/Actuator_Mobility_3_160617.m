@@ -3,16 +3,17 @@
 % Fujii & Yoshihara（このコードはFujii作成）
 clear; close all;
 % Parameters
-global g h mi li  ki yg y_contact u0 Gi bi % Ii 
+global g h mi li  ki yg y_contact u0 Gi bi kkf% Ii 
 g = 9.8 ; h = 10^(-3) ;
 mi = [48 11] ; % [kg] 1: HAT 2: leg
 li = [1 1 1]; % [m] 1: dammy 2: leg 3:between leg 
 % Ii = [0 mi(2)*li(2)^2/12 ]; % inertia 1: dammy 2: leg 
-bi = [1000 100 1000 100 1000] ; % b1 b2 bk bg
-ki = [100000 10000 10000 100 10000] ; % k1 k2 kg
+bi = [1000 1000 1000 1000 1000] ; % b1 b2 bk bg
+ki = [100000 50000 100000 1000 10000] ; % k1 k2 kg
 yg = 0.00; % terrain (horizontal)
-u0 = 4 ; % constrant neural input 4-8(slow walk--fast run)
-Gi = [3000 3000 3000] ; % Feedback gain
+u0 = 2 ; % constrant neural input 4-8(slow walk--fast run)
+Gi = [1000 10000 10000 1000 6000 6000] ; % Feedback gain zeros(6,1);%  
+kkf = 1 ; 
 % Initial condition
 l1 = li(2); l1 = li(2);
 y_contact = zeros(2,16) ; % xi & initial and contact
@@ -37,10 +38,8 @@ if 1
 Y = [xi zeros(1,6)] ; % dt_xi(9)
 % run simulation
 tic;
-% options = odeset('RelTol',1e-4,'AbsTol',repmat(1e-4,1,52));
-% [time,Y] = ode45(@odefun_Taga1991,[0 2],Y0,options) ;
-iter =2000 ; 
-Y = [Y;zeros(iter,12)]; var1=zeros(iter,6); var2 = zeros(iter,9);
+iter =4000 ; 
+Y = [Y;zeros(iter,12)]; var1=zeros(iter,24); var2 = zeros(iter,22);
 for t = 1:iter
     [Y(t+1,:) var1(t,:) var2(t,:)] = fun_Actuator(Y(t,:)); 
 %     [Y(t+1,:) Fgi(t,:) dt2_xi(t,:) Tri(t,:)] = fun_Neural_Taga1991(Y(t,:)); 
@@ -77,21 +76,40 @@ plot(dt_xi(:,1),'b'); hold on
 if 1
 figure(1)
 set(gcf,'Color',[1 1 1]) ;
-skip = 10 ;
+skip = 100 ;
 nn = 1 ; % mov index
 % v = VideoWriter('Actuator_Mobility_3_160617.mp4','MPEG-4');
 v = VideoWriter('Actuator_Mobility_3_160617.avi');
 open(v)
+clr_1 = {'k','r','b'} ; clr_2 = {'r','b';'k','b';'k','r'} ;
+dev_1 = [0 -0.1; 0.1 0;-0.1 0];
 for frame = 1:skip:t%length(time) 
-    plot(xi(frame,[1 3]),xi(frame,[2 4]),'ro-',xi(frame,[1 5]),xi(frame,[2 6]),'bo-',xi(frame,[3 5]),xi(frame,[4 6]),'ko-'); hold on;
-%     plot(xi(frame,[1 4]),xi(frame,[2 5]),'ro-',xi(frame,[1 7]),xi(frame,[2 8]),'bo-',xi(frame,[4 7]),xi(frame,[5 8]),'ko-'); hold on;
+    xit = xi(frame,:); 
+    plot(xit([1 3]),xit([2 4]),'ko:',xit([1 5]),xit([2 6]),'ko:',xit([3 5]),xit([4 6]),'ko:'); hold on;
+    tmp = var1(frame,7:12) ; vdl(1,1:2) = tmp(1:2); vdl(2,1:2) = tmp(3:4); vdl(3,1:2) = tmp(5:6);
+    tmp = var1(frame,13:24) ; vdc(1,1:2,1) = tmp(1:2); vdc(1,1:2,2) = tmp(3:4); vdc(2,1:2,1) = tmp(5:6); vdc(2,1:2,2) = tmp(7:8);
+                              vdc(3,1:2,1) = tmp(9:10); vdc(3,1:2,2) = tmp(11:12);
+    tmp = var2(frame,13:16) ; Fgi(1,1:2) = tmp(1:2); Fgi(2,1:2) = tmp(3:4); 
+    xi2(1,1:2) = (3*xit(3:4)+xit(5:6))/4; xi2(1,3:4) = (xit(3:4)+3*xit(5:6))/4;
+    xi2(2,1:2) = (3*xit(3:4)+xit(1:2))/4; xi2(2,3:4) = (xit(3:4)+3*xit(1:2))/4; 
+    xi2(3,1:2) = (3*xit(1:2)+xit(5:6))/4; xi2(3,3:4) = (xit(1:2)+3*xit(5:6))/4;
+    tmp = var2(frame,10:15)*0.0005 ; Fai(1,1:2) = tmp(1:2) ; Fai(2,1:2) = tmp(3:4) ; Fai(3,1:2) = tmp(5:6) ;
+    for i = 1:3
+        quiver(xit(2*i-1),xit(2*i),vdl(i,1),vdl(i,2),0.1,'color',clr_1{i})
+        quiver(xit(2*i-1),xit(2*i),vdc(i,1,1),vdc(i,2,1),0.1,'color',clr_2{i,1})
+        quiver(xit(2*i-1),xit(2*i),vdc(i,1,2),vdc(i,2,2),0.1,'color',clr_2{i,2})
+        quiver(xi2(i,1)+dev_1(i,1),xi2(i,2)+dev_1(i,2),Fai(i,1),Fai(i,2),0.1,'color','k')
+        quiver(xi2(i,3)+dev_1(i,1),xi2(i,4)+dev_1(i,2),-Fai(i,1),-Fai(i,2),0.1,'color','k')
+    end
     line([-10 10],[0 0],'color','k');
     axis equal
     xlim([-1 3]) ;
     ylim([-0.5 2]) ; 
     hold off ;
-    title(sprintf('time = %0.2f (s) k1 = %0.2f k2 = %0.2f k3 = %0.2f kf2 = %0.2f kf3 = %0.2f',time(frame),...
-        var2(frame,4),var2(frame,5),var2(frame,6),var2(frame,8),var2(frame,9)),'fontsize',8);
+    title(sprintf('time = %0.2f (s) k1 = %0.2f k2 = %0.2f k3 = %0.2f kf1 = %0.2f kf2 = %0.2f kf3 = %0.2f',time(frame),...
+        var2(frame,4),var2(frame,5),var2(frame,6),var2(frame,7),var2(frame,8),var2(frame,9)),'fontsize',8);
+%     title(sprintf('time = %0.2f (s) k1 = %0.2f k2 = %0.2f k3 = %0.2f th1 = %d th2 = %d th3 = %d',time(frame),...
+%         var2(frame,4),var2(frame,5),var2(frame,6),floor(var2(frame,20)),floor(var2(frame,21)),floor(var2(frame,22))),'fontsize',8);
     set(gca,'fontsize',10) ;
     mov(nn)= getframe(gcf); % mov index
     nn = nn+1;
@@ -100,4 +118,5 @@ end
 
 writeVideo(v,mov)
 close(v)
+% saveas(gcf,'example.pdf');
 end
