@@ -1,6 +1,5 @@
-function [Y var1 var2] = fun_Actuator(y0)
+function [Y var1 var2] = fun_Actuator(y0,h)
 
-global h
 % for debug 
 % y0 = Y(t,:)
 
