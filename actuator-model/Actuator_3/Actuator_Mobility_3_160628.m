@@ -15,6 +15,17 @@ u0 = 3; % constrant neural input 4-8(slow walk--fast run)
 Gi = [1000 10000 10000 1000 6000 6000] ; % Feedback gain zeros(6,1);%  
 kkf = 1 ; 
 
+param.gg = [0;-9.8];
+param.k_leg2 = 100000;
+param.k_leg3 = 100000;
+param.b_leg2 = 1000;
+param.b_leg3 = 1000;
+param.l0 = l0;
+param.m1 = 48;
+param.m2 = 11;
+param.m3 = 11;
+
+
 % Initial condition
 y_contact = zeros(2,16) ; % xi & initial and contact
 x1 = 0 ; y1 = 0.92 ; % initial position for gait
@@ -40,9 +51,9 @@ tic;
 iter =4000 ; 
 Y = [Y;zeros(iter,12)]; var1=zeros(iter,24); var2 = zeros(iter,22);
 for t = 1:iter
-    [Y(t+1,:) var1(t,:) var2(t,:)] = fun_Actuator(Y(t,:),h); 
-%     [Y(t+1,:) Fgi(t,:) dt2_xi(t,:) Tri(t,:)] = fun_Neural_Taga1991(Y(t,:)); 
-    Y_contact(t,:) = [y_contact(1,1:7) y_contact(2,1:7)] ;
+    [Y(t+1,:) var1(t,:) var2(t,:)] = fun_Actuator(Y(t,:),param,h); 
+    %[Y(t+1,:) Fgi(t,:) dt2_xi(t,:) Tri(t,:)] = fun_Neural_Taga1991(Y(t,:)); 
+    %Y_contact(t,:) = [y_contact(1,1:7) y_contact(2,1:7)] ;
     if mod(t,1000)==0; t 
     end
 end

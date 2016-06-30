@@ -1,13 +1,24 @@
-function [dy var1 var2] = RKfun_3(y0,isRefresh) % Fgi dt2_xi l_vec th
+function [dy var1 var2] = RKfun_3(y0,param) % Fgi dt2_xi l_vec th
 % 20160628 review
 % th1の角度の定義、左右脚の地面反力による分岐を直して、
 % 動きやすさkの定義を改良したがver2よりもさらに走れなくなった
-global g mi li ki yg y_contact u0 Gi bi kkf% Ii
+global g mi li ki yg y_contact u0 Gi bi kkf % Ii
+
+%rename params
+k_leg2=param.k_leg2;
+k_leg3=param.k_leg3;
+b_leg2=param.b_leg2;
+b_leg3=param.b_leg3;
+gg = param.gg;
+l0 = param.l0;
+m1 = param.m1;
+m2 = param.m2;
+m3 = param.m3;
 
 xi = y0(1:6) ; dt_xi = y0(7:12) ; 
 
 m1  = mi(1); m2 = mi(2); 
-l01 = li(1); l02 = li(2); l03 = li(3); 
+l01 = l0; l02 = l0; l03 = l0; 
 k1  = ki(1); k2 = ki(2) ;  k3 = ki(3) ;  k4 = ki(4) ; kg = ki(5);
 b1 = bi(1) ; b2 = bi(2) ; b3 = bi(3) ; b4 = bi(4) ; bg = bi(5) ; % I2 = Ii(2); 
 x1 = xi(1) ; y1 = xi(2) ; 
@@ -19,6 +30,9 @@ dt_x3 = dt_xi(5); dt_y3 = dt_xi(6);
 xx1 = [x1; y1];%top position
 xx2 = [x2; y2];%foretip
 xx3 = [x3; y3];%hindtip
+dxx1 = [dt_x1; dt_y1];%top position
+dxx2 = [dt_x2; dt_y2];%foretip
+dxx3 = [dt_x3; dt_y3];%hindtip
 
 d23=(x2-x3)^2+(y2-y3)^2;
 d12=(x1-x2)^2+(y1-y2)^2; 
@@ -58,40 +72,64 @@ dt_yl = dt_y3 ;
 
 % Ground reaction force
 Fgi = zeros(4,1) ; 
-if 1 % 1: GRF exist 0: no GRF
-    if yr < yg % contact
-        if y_contact(1,7) ~= 0 % not initial & keep contact
-            yr0 = yg ; % Y0(t_contact,10)-(l3/2)*sin(Y0(t_contact,11)) ; % ground y
-            xr0 = y_contact(1,3) ; % ground x
-        else % first contact in one cycle
-            if isRefresh == 1 % Update
-                y_contact(1,1:7) = [xi(1:6) 1] ;
-            end
-            yr0 = yr ; xr0 = xr ;
-        end
-        Fgi(1) = -kg*(xr-xr0) - bg*dt_xr ;
-        Fgi(2) = -kg*(yr-yr0) + bg*f_max(-dt_yr) ;
-    else Fgi(1:2) = 0 ; % non-contact
-        y_contact(1,1:13) = zeros(1,13) ;
+
+persistent isFirstContact2;
+persistent isFirstContact3;
+persistent xx02;
+persistent xx03;
+
+if isempty(isFirstContact2)
+    if xx2(2) < yg %contact
+        isFirstContact2 = false;
+    else
+        isFirstContact2 = true;
     end
-    
-    if yl < yg % contact
-        if y_contact(2,7) ~= 0 % not initial & keep contact
-            yl0 = yg ; % ground y
-            xl0 = y_contact(2,5) ; % ground x
-        else % first contact in one cycle
-            if isRefresh == 1 % Update
-                y_contact(2,1:7) = [xi(1:6) 1] ;
-            end
-            yl0 = yl ; xl0 = xl ;
-        end
-        Fgi(3) = -kg*(xl-xl0) - bg*dt_xl ;
-        Fgi(4) = -kg*(yl-yl0) + bg*f_max(-dt_yl) ;
-    else Fgi(3:4) = 0 ; % non-contact
-        y_contact(2,1:7) = zeros(1,7) ;
-    end
-    
 end
+
+if isempty(isFirstContact3)
+    if xx3(2) < yg %contact
+        isFirstContact3 = false;
+    else
+        isFirstContact3 = true;
+    end
+end
+
+if xx2(2) < yg %contact
+    if ~isFirstContact2
+        xx02 = xx2;
+        isFirstContact2 = true;
+    else
+        %do nothing
+    end
+else
+    isFirstContact2 = false;
+end
+
+if xx3(2) < yg %contact
+    if ~isFirstContact3
+        xx03 = xx3;
+        isFirstContact3 = true;
+    else
+        %do nothing
+    end
+else
+    isFirstContact3 = false;
+end
+
+Fg2 = [0;0];
+if xx2(2) < yg
+    Fg2(1) = 0;%-kg * (xx2(1) - xx02(1)) ;%-    bg*dxx2(1);
+    Fg2(2) = -kg * (xx2(2) - yg ) ;%-min(bg*dxx2(2),0); 
+end
+
+Fg3 = [0;0];
+if xx3(2) < yg
+    Fg3(1) = 0;%-kg * (xx3(1) - xx03(1)) ;%-    bg*dxx3(1);
+    Fg3(2) = -kg * (xx3(2) - yg ) ;%-min(bg*dxx3(2),0);     
+end
+
+Fgi(1:2)=Fg2;
+Fgi(3:4)=Fg3;
 
 % Actuator force -----------------------------------------------------------------------------------
 % Mobility 
@@ -149,43 +187,18 @@ if 1 % 1: Mobility control
     vdi(3) = dot(vd_childa(:,3),ex3) ;
     
     for i = 1:3
-        tmp = Gi(i)*(vdi(i)-vi(i)) ;
-        Fai(i) = tmp ;
+        Fai(i) = Gi(i)*(vdi(i)-vi(i));
     end
 end
-Fa1 = Fai(1) ;%0;%
-Fa2 = Fai(2) ; Fa3 = Fai(3) ;
+Fa1 = Fai(1);
+Fa2 = Fai(2); 
+Fa3 = Fai(3);
 var1 = [l_vec vdl(:,1)' vdl(:,2)' vdl(:,3)' vdc(:,1,2)' vdc(:,1,3)' vdc(:,2,1)' vdc(:,2,3)' vdc(:,3,1)' vdc(:,3,2)']; 
 
 % bipedal_model -----------------------------------------------------------------------------------
 
 % Generated Torques
 Fgx2 = Fgi(1) ; Fgy2 = Fgi(2) ; Fgx3 = Fgi(3) ; Fgy3 = Fgi(4) ; 
-
-% バネ定数を接地離地・短縮進展で変更する
-if Fgi(2) ~= 0 % 右脚が着地
-    if l02-l2 < 0 ; k_leg1 = k1 ; b_leg1 = b1 ; % 右脚が着地
-    else k_leg1 = k2 ; b_leg1 = b2 ;
-    end
-else 
-    if l02-l2 < 0 ; k_leg1 = k3 ; b_leg1 = b3 ; % 右脚が離地
-    else k_leg1 = k4 ; b_leg1 = b4 ;
-    end
-end
-
-if Fgi(4) ~= 0% 左脚が着地
-    if l03-l3 < 0 ; k_leg2 = k1 ; b_leg2 = b1 ; % 左脚が着地
-    else k_leg2 = k2 ; b_leg2 = b2 ;
-    end
-else 
-    if l03-l3 < 0 ; k_leg2 = k3 ; b_leg2 = b3 ; % 左脚が離地
-    else k_leg2 = k4 ; b_leg2 = b4 ;
-    end    
-end
-
-if l01-l1 < 0 ; k_hip = k3 ; b_hip = b3 ;
-else k_hip = k4 ; b_hip = b4 ;
-end
 
 % differential equantion and output
 % このダイナミクスは合っていそう（確認済）
@@ -196,18 +209,14 @@ else
 end
 kf = [0 0 0];
 var2 = [vi k kf -Fa1*costh1 Fa1*sinth1 -Fa2*cos(th2) Fa2*sin(th2) -Fa3*cos(th3) Fa3*sin(th3) Fgi' th];
-dy = zeros(1,12) ;
-dy(1:6)  = dt_xi ;
-dy(7)  = (- Fa2*cos(th2) - Fa3*cos(th3) ..., % HAT 
-                - k_leg1*(l02-l2)*cos(th2) - k_leg2*(l03-l3)*cos(th3) + b_leg1*dt_l2*cos(th2) + b_leg2*dt_l3*cos(th3))/m1 ;
-dy(8)  = (- m1 * g + Fa2*sin(th2) + Fa3*sin(th3)  .... % 
-                + k_leg1*(l02-l2)*sin(th2) + k_leg2*(l03-l3)*sin(th3) - b_leg1*dt_l2*sin(th2) - b_leg2*dt_l3*sin(th3))/m1 ;
-dy(9)  = (+ Fgx2 - Fa1*costh1 + Fa2*cos(th2) ...
-                + k_leg1*(l02-l2)*cos(th2) - k_hip*(l01-l1)*costh1 - b_leg1*dt_l2*cos(th2) + b_hip*dt_l1*costh1)/m2 ; % Leg_R
-dy(10) = (+ Fgy2 -m2 * g + Fa1*sinth1 - Fa2*sin(th2) ...
-                - k_leg1*(l02-l2)*sin(th2) + k_hip*(l01-l1)*sinth1 + b_leg1*dt_l2*sin(th2) - b_hip*dt_l1*sinth1)/m2 ;
-dy(11) = (+ Fgx3 + Fa1*costh1 + Fa3*cos(th3) ...
-                + k_leg2*(l03-l3)*cos(th3) + k_hip*(l01-l1)*costh1 - b_leg2*dt_l3*cos(th3) - b_hip*dt_l1*costh1)/m2 ; % Leg_L
-dy(12) = (+ Fgy3 -m2 * g - Fa1*sinth1- Fa3*sin(th3) ...
-                - k_leg2*(l03-l3)*sin(th3) - k_hip*(l01-l1)*sinth1 + b_leg2*dt_l3*sin(th3) + b_hip*dt_l1*sinth1)/m2 ;
-dt2_xi = dy(7:12) ;
+
+Fs2 = k_leg2 * ( (xx1-xx2) -(xx1-xx2)/norm(xx1-xx2)*l02);
+Fs3 = k_leg3 * ( (xx1-xx3) -(xx1-xx3)/norm(xx1-xx3)*l03);
+Fb2 = -b_leg2 * ( dt_l2 * (xx1-xx2)/norm(xx1-xx2) );
+Fb3 = -b_leg3 * ( dt_l3 * (xx1-xx3)/norm(xx1-xx3) );
+
+dy = zeros(1,12);
+dy(1:6)  = dt_xi;
+dy( 7: 8)= gg + (-Fs2-Fs3+Fb2+Fb3    )/m1;
+dy( 9:10)= gg + ( Fs2    -Fb2    +Fg2)/m2; 
+dy(11:12)= gg + (    Fs3     -Fb3+Fg3)/m3; 
