@@ -79,53 +79,45 @@ persistent xx02;
 persistent xx03;
 
 if isempty(isFirstContact2)
-    if xx2(2) < yg %contact
-        isFirstContact2 = false;
-    else
-        isFirstContact2 = true;
-    end
+    isFirstContact2 = true;
 end
 
 if isempty(isFirstContact3)
-    if xx3(2) < yg %contact
-        isFirstContact3 = false;
-    else
-        isFirstContact3 = true;
-    end
+    isFirstContact3 = true;
 end
 
 if xx2(2) < yg %contact
-    if ~isFirstContact2 && isRefresh
+    if isempty(xx02) || (isFirstContact2 && isRefresh)
         xx02 = xx2;
-        isFirstContact2 = true;
+        isFirstContact2 = false;
     else
         %do nothing
     end
 else
-    isFirstContact2 = false;
+    isFirstContact2 = true;
 end
 
 if xx3(2) < yg %contact
-    if ~isFirstContact3 && isRefresh
+    if isempty(xx03) || (isFirstContact3 && isRefresh)
         xx03 = xx3;
-        isFirstContact3 = true;
+        isFirstContact3 = false;
     else
         %do nothing
     end
 else
-    isFirstContact3 = false;
+    isFirstContact3 = true;
 end
 
 Fg2 = [0;0];
 if xx2(2) < yg
-    Fg2(1) = 0;%-kg * (xx2(1) - xx02(1)) ;%-    bg*dxx2(1);
-    Fg2(2) = -kg * (xx2(2) - yg ) ;%-min(bg*dxx2(2),0); 
+    Fg2(1) = -kg * (xx2(1) - xx02(1)) -    bg*dxx2(1);
+    Fg2(2) = -kg * (xx2(2) - yg ) -min(bg*dxx2(2),0); 
 end
 
 Fg3 = [0;0];
 if xx3(2) < yg
-    Fg3(1) = 0;%-kg * (xx3(1) - xx03(1)) ;%-    bg*dxx3(1);
-    Fg3(2) = -kg * (xx3(2) - yg ) ;%-min(bg*dxx3(2),0);     
+    Fg3(1) = -kg * (xx3(1) - xx03(1)) -    bg*dxx3(1);
+    Fg3(2) = -kg * (xx3(2) - yg ) -min(bg*dxx3(2),0);     
 end
 
 Fgi(1:2)=Fg2;
