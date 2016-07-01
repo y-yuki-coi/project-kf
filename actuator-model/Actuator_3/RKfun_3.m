@@ -1,4 +1,4 @@
-function [dy var1 var2] = RKfun_3(y0,param) % Fgi dt2_xi l_vec th
+function [dy var1 var2] = RKfun_3(y0,param,isRefresh) % Fgi dt2_xi l_vec th
 % 20160628 review
 % th1の角度の定義、左右脚の地面反力による分岐を直して、
 % 動きやすさkの定義を改良したがver2よりもさらに走れなくなった
@@ -95,7 +95,7 @@ if isempty(isFirstContact3)
 end
 
 if xx2(2) < yg %contact
-    if ~isFirstContact2
+    if ~isFirstContact2 && isRefresh
         xx02 = xx2;
         isFirstContact2 = true;
     else
@@ -106,7 +106,7 @@ else
 end
 
 if xx3(2) < yg %contact
-    if ~isFirstContact3
+    if ~isFirstContact3 && isRefresh
         xx03 = xx3;
         isFirstContact3 = true;
     else
