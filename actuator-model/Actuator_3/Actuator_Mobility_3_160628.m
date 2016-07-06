@@ -1,6 +1,6 @@
 % Actuator_Mobility_3_160628.m
 % Fujii & Yoshihara, coded by Fujii
-clear; close all;
+clear all; close all;
 
 % Parameters
 param.gg = [0;-9.8];
@@ -11,11 +11,12 @@ param.b_leg3 = 100;
 param.m1 = 48;
 param.m2 = 11;
 param.m3 = 11;
-param.G1 = 5000; %feedback gain
-param.G2 = 5000;
-param.G3 = 5000;
-param.vdx = 1.2; % desired speed m/s
-param.desiredHeight = 1; % now testing
+param.G1 = 1000; %feedback gain
+param.G2 = 1000;
+param.G3 = 1000;
+param.vdx = 3; % desired speed m/s
+param.desiredHeight = 1.2; % now testing
+param.desiredHeightGain = 1; % now testing
 param.yg = 0.00; % terrain (horizontal)
 param.kg = 10000;
 param.bg = 100;
@@ -34,19 +35,22 @@ param.llim1=param.l0*1.1;
 param.llim2=param.l0*1.1;
 param.llim3=param.l0*1.1;
 param.simulator.h = 1e-04;
+param.simulator.maxItr = 12000;
 
 %rename params
 h = param.simulator.h;
+maxItr = param.simulator.maxItr;
 
 % Initial condition
 y_contact = zeros(2,16) ; % xi & initial and contact
 x1 = 0 ; y1 = param.y01 ; % initial position for gait
-thi = [0 60/180*pi 120/180*pi] ;
+                    thi = [0 60/180*pi 120/180*pi] ;
+                    %thi = [0 120/180*pi 60/180*pi] ;
 th2 = thi(2); th3 = thi(3); 
-x2 = x1 - param.l0*cos(th3); % center of segment, CHECK
-y2 = y1 - param.l0*sin(th3); 
-x3 = x1 - param.l0*cos(th2); 
-y3 = y1 - param.l0*sin(th2); 
+x2 = x1 - param.l0*cos(th2); % center of segment, CHECK
+y2 = y1 - param.l0*sin(th2); 
+x3 = x1 - param.l0*cos(th3); 
+y3 = y1 - param.l0*sin(th3); 
 th1 = 0; %temporalily set to zero, acos((x2-x3)/sqrt((x2-x3)^2+(y2-y3)^2));
 xi = [x1 y1 x2 y2 x3 y3] ; % vector
 
@@ -60,7 +64,7 @@ if 1
     Y = [xi zeros(1,6)] ; % dt_xi(9)
                           % run simulation
     tic;
-    iter =5000; 
+    iter =maxItr; 
     Y = [Y;zeros(iter,12)]; %result=zeros(iter,24); 
     for t = 1:iter
         [Y(t+1,:) result(t,:)] = fun_Actuator(t,Y(t,:),param,h); 

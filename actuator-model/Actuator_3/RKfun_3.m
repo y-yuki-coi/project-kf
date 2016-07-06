@@ -32,7 +32,7 @@ eps1 = param.eps1;
 eps2 = param.eps2;
 eps3 = param.eps3;
 yg = param.yg;
-
+desiredHeightGain=param.desiredHeightGain;
 
 
 xi = y0(1:6) ; dt_xi = y0(7:12) ; 
@@ -62,65 +62,42 @@ l3 = sqrt(d31);
 dt_l1 = 1/2*d23^(-1/2)*(2*(x2-x3)*(dt_x2-dt_x3)+2*(y2-y3)*(dt_y2-dt_y3)); 
 dt_l2 = 1/2*d12^(-1/2)*(2*(x2-x1)*(dt_x2-dt_x1)+2*(y2-y1)*(dt_y2-dt_y1)); 
 dt_l3 = 1/2*d31^(-1/2)*(2*(x1-x3)*(dt_x1-dt_x3)+2*(y1-y3)*(dt_y1-dt_y3)); 
-l_vec = [l1 l2 l3 dt_l1 dt_l2 dt_l3] ;
 
 % calculate ground reaction force (GRF)-----------------------------------------------------------------
-% ankle position
-xr = x2 ;
-yr = y2 ; 
-xl = x3 ;
-yl = y3 ; 
-dt_xr = dt_x2 ;
-dt_yr = dt_y2 ;
-dt_xl = dt_x3 ;
-dt_yl = dt_y3 ;
-
 % Ground reaction force
 Fgi = zeros(4,1) ; 
 
-persistent isFirstContact2;
-persistent isFirstContact3;
 persistent xx02;
 persistent xx03;
 
-if isempty(isFirstContact2)
-    isFirstContact2 = true;
-end
-
-if isempty(isFirstContact3)
-    isFirstContact3 = true;
-end
-
 if xx2(2) < yg %contact
-    if isempty(xx02) || (isFirstContact2 && isRefresh)
+    if isempty(xx02) && isRefresh
         xx02 = xx2;
-        isFirstContact2 = false;
     else
-        %do nothing
+        
     end
 else
-    isFirstContact2 = true;
+    xx02 = [];
 end
 
 if xx3(2) < yg %contact
-    if isempty(xx03) || (isFirstContact3 && isRefresh)
+    if isempty(xx03) && isRefresh
         xx03 = xx3;
-        isFirstContact3 = false;
     else
-        %do nothing
+        
     end
 else
-    isFirstContact3 = true;
+    xx03 = [];
 end
 
 Fg2 = [0;0];
-if xx2(2) < yg
+if ~isempty(xx02)
     Fg2(1) = -kg * (xx2(1) - xx02(1)) -    bg*dxx2(1);
     Fg2(2) = -kg * (xx2(2) - yg ) -min(bg*dxx2(2),0); 
 end
 
 Fg3 = [0;0];
-if xx3(2) < yg
+if ~isempty(xx03)
     Fg3(1) = -kg * (xx3(1) - xx03(1)) -    bg*dxx3(1);
     Fg3(2) = -kg * (xx3(2) - yg ) -min(bg*dxx3(2),0);     
 end
@@ -150,23 +127,23 @@ end
 % vdxがx方向の目標速度とする
 % Fは伸展方向が正
 
-vd = [vdx; desiredHeight-xx1(2)] ; % 目標速度
+vd = [vdx; desiredHeightGain*(desiredHeight-xx1(2))] ; % 目標速度
 if 1 % 1: Mobility control
      %copute effective direction of 3 muscles, ex1, ex2, ex3
     ex1=(xx2-xx3)/norm(xx2-xx3);
     ex2=(xx1-xx2)/norm(xx1-xx2);
-    ex3=(xx1-xx3)/norm(xx1-xx3);    
+    ex3=(xx1-xx3)/norm(xx1-xx3);            
     if x2 > x3
         xxfore = xx2;
         xxhind = xx3;
-    else
+    else 
         xxfore = xx3;
         xxhind = xx2;
     end
-    ex1 = (xxfore-xxhind)/norm(xxfore-xxhind);        
-    %if xx2(2) < yg && xx3(2) < yg
-    %ex1 = ex1 * 0;
-    %end
+    ex1 = (xxhind-xxfore)/norm(xxhind-xxfore);            
+    if abs(x2-x3) < 1e-03
+        ex1 = ex1*0;
+    end
     
     % right leg, muscle 2
     vdl(:,2) = dot(ex2,vd)*ex2;
@@ -199,20 +176,30 @@ if 1 % 1: Mobility control
     vd_childa(:,3) = (1-km(1))*(1-km(2))*vdl(:,3) + km(1)*vdc(:,1,3) + km(2)*vdc(:,2,3) ;
     
     % 出力へ変換
-    dt_ld(1) = -dot(vd_childa(:,1),ex1) ; % 出力方向に変換
+    dt_ld(1) = dot(vd_childa(:,1),ex1) ; % 出力方向に変換
     dt_ld(2) = dot(vd_childa(:,2),ex2) ; 
     dt_ld(3) = dot(vd_childa(:,3),ex3) ;
     
     dt_l(1)=dt_l1;
     dt_l(2)=dt_l2;
     dt_l(3)=dt_l3;
+    Fai(1)=0;
     for i = 1:3
-        Fai(i) = -Gi(i)*(dt_ld(i)-dt_l(i));
+        Fai(i) = Gi(i)*(dt_ld(i)-dt_l(i));
     end
         
-    Fa1 = Fai(1)*ex1;
-    Fa2 = Fai(2)*ex2;
-    Fa3 = Fai(3)*ex3;    
+    %Fa1 = Fai(1)*ex1;
+    %Fa2 = Fai(2)*ex2;
+    %Fa3 = Fai(3)*ex3;    
+    
+    %Fa1 = -G1*dt_ld(1)*ex1;
+    %Fa2 = -G2*dt_ld(2)*ex2;
+    %Fa3 = -G3*dt_ld(3)*ex3;
+        
+    Fa1 = -G1*(dt_ld(1)-dt_l1)*ex1;
+    Fa2 = -G2*(dt_ld(2)-dt_l2)*ex2;
+    Fa3 = -G3*(dt_ld(3)-dt_l3)*ex3;
+    
 end
 
 % bipedal_model -----------------------------------------------------------------------------------
@@ -255,6 +242,8 @@ result.km = km;
 result.xx1 = xx1;
 result.xx2 = xx2;
 result.xx3 = xx3;
+result.xx02 = xx02;
+result.xx03 = xx03;
 result.Fs2 = Fs2;
 result.Fs3 = Fs3;
 result.Fb2 = Fb2;

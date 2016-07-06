@@ -1,4 +1,4 @@
-close all;
+%close all;
 
 %copy result to matrix
 [timeRange,n]=size(result);
@@ -6,6 +6,8 @@ for t = 1:1:timeRange
     xx1(t,:)=result(t).xx1;
     xx2(t,:)=result(t).xx2;
     xx3(t,:)=result(t).xx3;
+    %xx02(t,:)=result(t).xx02;
+    %xx03(t,:)=result(t).xx03;
     Flim1(t,:)=result(t).Flim1;
     Flim2(t,:)=result(t).Flim2;
     Flim3(t,:)=result(t).Flim3;
@@ -43,6 +45,13 @@ plot(xx2(:,1),xx2(:,2),'g-');
 plot(xx3(:,1),xx3(:,2),'b-');
 axis equal
 
+%figure
+%hold on
+%plot(xx02(:,1),xx02(:,2),'g-');
+%plot(xx03(:,1),xx03(:,2),'b-');
+%axis equal
+%title('xx0');
+
 figure
 hold on
 plot(time,Flim1(:,1).^2 + Flim1(:,1).^2,'r-');
@@ -52,8 +61,10 @@ title('Flim');
 
 figure
 hold on
-plot(time,Fg2(:,1).^2 + Fg2(:,1).^2,'g-');
-plot(time,Fg3(:,1).^2 + Fg3(:,1).^2,'b-');
+plot(time,Fg2(:,1),'g-');
+plot(time,Fg2(:,2),'g-.');
+plot(time,Fg3(:,1),'b-');
+plot(time,Fg3(:,2),'b-.');
 title('Fg');
 
 figure
@@ -97,10 +108,11 @@ videoPointer = VideoWriter('test.avi');
 open(videoPointer)
 for t=1:100:timeRange
     hold on
-    line( [xx1(t,1) xx2(t,1)], [xx1(t,2) xx2(t,2)]);
-    line( [xx2(t,1) xx3(t,1)], [xx2(t,2) xx3(t,2)]);
-    line( [xx3(t,1) xx1(t,1)], [xx3(t,2) xx1(t,2)]);    
-    line( [xx1(t,1) xx1(t,1)+vd(t,1)], [xx1(t,2) xx1(t,2)+vd(t,2)]);    
+    line( [xx1(t,1) xx2(t,1)], [xx1(t,2) xx2(t,2)], 'Color', 'g');
+    line( [xx2(t,1) xx3(t,1)], [xx2(t,2) xx3(t,2)], 'Color', 'r');
+    line( [xx3(t,1) xx1(t,1)], [xx3(t,2) xx1(t,2)], 'Color', 'b');    
+    line( [xx1(t,1) xx1(t,1)+vd(t,1)], [xx1(t,2) xx1(t,2)+vd(t,2)], ...
+          'Color', 'k');    
 
     %line( [xx1(t,1) xx1(t,1)+ex2(t,1)], [xx1(t,2) xx1(t,2)+ex2(t,2)], ...
     %      'Color','g');    
