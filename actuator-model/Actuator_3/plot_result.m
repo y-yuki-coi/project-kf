@@ -6,6 +6,9 @@ for t = 1:1:timeRange
     xx1(t,:)=result(t).xx1;
     xx2(t,:)=result(t).xx2;
     xx3(t,:)=result(t).xx3;
+    dxx1(t,:)=result(t).dxx1;
+    dxx2(t,:)=result(t).dxx2;
+    dxx3(t,:)=result(t).dxx3;
     %xx02(t,:)=result(t).xx02;
     %xx03(t,:)=result(t).xx03;
     Flim1(t,:)=result(t).Flim1;
@@ -33,9 +36,12 @@ for t = 1:1:timeRange
     dt_ld2(t,:)=result(t).dt_ld(:,2);
     dt_ld3(t,:)=result(t).dt_ld(:,3);
     
-    km(t,:)=result(t).km';    
+    km(t,:)=result(t).km';
 end
 time=((1:1:timeRange)*result(1).param.simulator.h)';
+
+
+
 
 %now start plotting
 figure
@@ -51,6 +57,14 @@ axis equal
 %plot(xx03(:,1),xx03(:,2),'b-');
 %axis equal
 %title('xx0');
+
+figure
+hold on
+plot(time,vd(:,1),'r-.');
+plot(time,vd(:,2),'k-.');
+plot(time,dxx1(:,1),'r-');
+plot(time,dxx1(:,2),'k-');
+title('vd, v1');
 
 figure
 hold on
@@ -86,14 +100,10 @@ hold on
 plot(time,dt_l1,'r-');
 plot(time,dt_l2,'g-');
 plot(time,dt_l3,'b-');
-title('dt_l');
-
-figure
-hold on
-plot(time,dt_ld1,'r-');
-plot(time,dt_ld2,'g-');
-plot(time,dt_ld3,'b-');
-title('dt_ld');
+plot(time,dt_ld1,'r-.');
+plot(time,dt_ld2,'g-.');
+plot(time,dt_ld3,'b-.');
+title('dtl, dtld');
 
 
 figure

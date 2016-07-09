@@ -14,20 +14,20 @@ param.m3 = 11;
 param.G1 = 1000; %feedback gain
 param.G2 = 1000;
 param.G3 = 1000;
-param.vdx = 3; % desired speed m/s
+param.vdx = 1.5; % desired speed m/s
 param.desiredHeight = 1.2; % now testing
 param.desiredHeightGain = 1; % now testing
 param.yg = 0.00; % terrain (horizontal)
-param.kg = 10000;
+param.kg = 100000;
 param.bg = 100;
 param.eps1 = 1e-10; 
 param.eps2 = 1e-4; 
 param.eps3 = 1e-4; % 零の除算を避けるための微小量 
 param.y01 = 0.92;
 param.l0 = param.y01*2/sqrt(3);
-param.klim1=10000;
-param.klim2=10000;
-param.klim3=10000;
+param.klim1=100000;
+param.klim2=100000;
+param.klim3=100000;
 param.blim1=100;
 param.blim2=100;
 param.blim3=100;
@@ -35,7 +35,8 @@ param.llim1=param.l0*1.1;
 param.llim2=param.l0*1.1;
 param.llim3=param.l0*1.1;
 param.simulator.h = 1e-04;
-param.simulator.maxItr = 12000;
+param.simulator.maxItr = 1000;
+param.zeroLevel = 1e-03;
 
 %rename params
 h = param.simulator.h;
@@ -44,8 +45,10 @@ maxItr = param.simulator.maxItr;
 % Initial condition
 y_contact = zeros(2,16) ; % xi & initial and contact
 x1 = 0 ; y1 = param.y01 ; % initial position for gait
-                    thi = [0 60/180*pi 120/180*pi] ;
-                    %thi = [0 120/180*pi 60/180*pi] ;
+                          %thi = [0 120/180*pi 60/180*pi] ;
+thi = [0 60/180*pi 145/180*pi] ;
+thi = [0 145/180*pi 60/180*pi] ;
+
 th2 = thi(2); th3 = thi(3); 
 x2 = x1 - param.l0*cos(th2); % center of segment, CHECK
 y2 = y1 - param.l0*sin(th2); 
@@ -64,15 +67,14 @@ if 1
     Y = [xi zeros(1,6)] ; % dt_xi(9)
                           % run simulation
     tic;
-    iter =maxItr; 
-    Y = [Y;zeros(iter,12)]; %result=zeros(iter,24); 
-    for t = 1:iter
+    Y = [Y;zeros(maxItr,12)]; %initialize Y matrix
+    for t = 1:maxItr
         [Y(t+1,:) result(t,:)] = fun_Actuator(t,Y(t,:),param,h); 
         if mod(t,1000)==0; 
             t 
         end
     end
-    time = h:h:(iter+1)*h ;  
+    time = h:h:(maxItr+1)*h ;  
     toc;
     
     xi = Y(:,1:6) ; dt_xi = Y(:,7:12) ; 

@@ -33,7 +33,7 @@ eps2 = param.eps2;
 eps3 = param.eps3;
 yg = param.yg;
 desiredHeightGain=param.desiredHeightGain;
-
+zeroLevel = param.zeroLevel;
 
 xi = y0(1:6) ; dt_xi = y0(7:12) ; 
 
@@ -133,16 +133,44 @@ if 1 % 1: Mobility control
     ex1=(xx2-xx3)/norm(xx2-xx3);
     ex2=(xx1-xx2)/norm(xx1-xx2);
     ex3=(xx1-xx3)/norm(xx1-xx3);            
+    
     if x2 > x3
         xxfore = xx2;
-        xxhind = xx3;
-    else 
+        xxhind = xx3;        
+        if norm(Fg2) > norm(Fg3)           
+            %if abs(Fg2(2)) > abs(Fg3(2))           
+            %if abs(Fg2(2)) > zeroLevel && abs(Fg3(2)) < zeroLevel            
+            %fore 2 touch ground, hind 3 in air
+            ex1 = (xxhind-xxfore)/norm(xxhind-xxfore);
+            em1 = -ex1;
+        else
+            %elseif abs(Fg2(2)) < zeroLevel && abs(Fg3(2)) > zeroLevel
+            %fore 2 in air, hind 3 touch ground
+            ex1 = -(xxhind-xxfore)/norm(xxhind-xxfore);
+            em1 = ex1;
+            %else
+            %ex1 = [0;0];
+            %em1 = [0;0];
+        end
+   
+    else
         xxfore = xx3;
-        xxhind = xx2;
-    end
-    ex1 = (xxhind-xxfore)/norm(xxhind-xxfore);            
-    if abs(x2-x3) < 1e-03
-        ex1 = ex1*0;
+        xxhind = xx2;      
+        if norm(Fg2) > norm(Fg3)
+            %if abs(Fg2(2)) > abs(Fg3(2))
+            %if abs(Fg2(2)) > zeroLevel && abs(Fg3(2)) < zeroLevel            
+            %fore 3 in air, hind 2 touch ground            
+            ex1 = -(xxhind-xxfore)/norm(xxhind-xxfore);
+            em1 = -ex1;
+        else
+            %elseif abs(Fg2(2)) < zeroLevel && abs(Fg3(2)) > zeroLevel
+            %fore 3 touch ground, hind 2 in air
+            ex1 = (xxhind-xxfore)/norm(xxhind-xxfore);
+            em1 = ex1;
+            %else
+            %ex1 = [0;0];
+            %em1 = [0;0];
+        end
     end
     
     % right leg, muscle 2
@@ -195,11 +223,14 @@ if 1 % 1: Mobility control
     %Fa1 = -G1*dt_ld(1)*ex1;
     %Fa2 = -G2*dt_ld(2)*ex2;
     %Fa3 = -G3*dt_ld(3)*ex3;
-        
-    Fa1 = -G1*(dt_ld(1)-dt_l1)*ex1;
-    Fa2 = -G2*(dt_ld(2)-dt_l2)*ex2;
-    Fa3 = -G3*(dt_ld(3)-dt_l3)*ex3;
     
+    %convert to muscle coordinate
+    em2 = ex2;
+    em3 = ex3;
+        
+    Fa1 = -G1*(dt_ld(1)-dt_l1)*em1;    
+    Fa2 = -G2*(dt_ld(2)-dt_l2)*em2;
+    Fa3 = -G3*(dt_ld(3)-dt_l3)*em3;    
 end
 
 % bipedal_model -----------------------------------------------------------------------------------
@@ -242,6 +273,9 @@ result.km = km;
 result.xx1 = xx1;
 result.xx2 = xx2;
 result.xx3 = xx3;
+result.dxx1 = dy(1:2)';
+result.dxx2 = dy(3:4)';
+result.dxx3 = dy(5:6)';
 result.xx02 = xx02;
 result.xx03 = xx03;
 result.Fs2 = Fs2;
