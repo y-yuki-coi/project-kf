@@ -3,7 +3,8 @@ close all
 
 %define parameters
 param.mass=[48;11;11];
-param.gg=[0;-9.8];
+param.r1 = 0.1;
+param.I1 = 1/2*param.mass(1)*(param.r1)^2;
 param.ks=[1;1;1]*10000;
 param.bs=[1;1;1]*100;
 param.kk=[1;1;1]*10000;
@@ -12,6 +13,9 @@ param.kc=10000;
 param.bc=100;
 param.mass=[48;11;11];
 param.gg=[0;-9.8];
+param.yg = 0;
+param.kg = 100000;
+param.bg = 100;
 param.ks=[1;1;1]*10000;
 param.bs=[1;1;1]*100;
 param.kk=[1;1;1]*10000;
@@ -35,17 +39,25 @@ param.po13=po13;
 param.po2=po2;
 param.po3=po3;
 
+param.phi12 = tho2 + pi;
+param.phi13 = tho3 + pi;
+
 %simulator conditions
-param.simulator.timeSpan = [0:0.1:2];
-param.simulator.odeOptions = odeset('RelTol', 1e-4, 'AbsTol', 1e-4);
+param.simulator.timeSpan = [0:1e-03:2];
+param.simulator.h = 1e-03;
+%param.simulator.odeOptions = odeset('RelTol', 1e-4, 'AbsTol', 1e-4);
 
 %start simulation
-computeRungeKutta(param);
+h   = param.simulator.h;
+timeSpan   = param.simulator.timeSpan;
+initialCondition = [po12; po13; po2; po3; tho2; tho3; ...
+                    0;0;  0;0;  0;0; 0;0; 0;    0 ];
+
+[y,result]=computeRungeKutta(timeSpan,initialCondition,param,h);
 
 %odeOptions = param.simulator.odeOptions;
 %timeSpan = param.simulator.timeSpan;
 %initialCondition = param.simulator.initialCondition;
-
 %[time, state] = ode45('dynamice',timeSpan,initialCondition,odeOptions,param);
 
 

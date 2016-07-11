@@ -1,9 +1,10 @@
-function [dy,result]=dynamics(y,param)
+function [dy,result]=dynamics(t,y,param,isRefresh)
 
 %rename params
 m1=param.mass(1);
 m2=param.mass(2);
 m3=param.mass(3);
+I1=param.I1;
 gg=param.gg;
 ks2=param.ks(2);
 ks3=param.ks(3);
@@ -17,6 +18,11 @@ bc1=param.bc;
 kc1=param.kc;
 ls2o=param.ls2o;
 ls3o=param.ls3o;
+phi12=param.phi12;
+phi13=param.phi13;
+yg=param.yg;
+kg=param.kg;
+bg=param.bg;
 
 %rename state variables
 p12=y(1:2);
@@ -33,20 +39,23 @@ dth12 = y(19);
 dth13 = y(20);
 
 %compute sensor values
-[ls2,dls2]=computeDistance(p2,p12);
-[ls3,dls3]=computeDistance(p3,p13);
-q12 = computePositionByAngle(p12,ls2,th12+phi12); 
-q13 = computePositionByAngle(p13,ls3,th13+phi13);
-[lk2,dlk2]=computeDistance(p2,q12);
-[lk3,dlk3]=computeDistance(p3,q13);
-[lc1,dlc1]=computeDistance(p12,p13);
+[ls2,dls2]=computeDistance(p2,p12,dp2,dp12);
+[ls3,dls3]=computeDistance(p3,p13,dp3,dp13);
+[q12,dq12] = computePositionByAngle(p12,ls2,th12+phi12,dp12,dls2,dth12)
+[q13,dq13]= computePositionByAngle(p13,ls3,th13+phi13,dp13,dls3,dth13)
+
+[lk2,dlk2]=computeDistance(p2,q12,dp2,dq12)
+[lk3,dlk3]=computeDistance(p3,q13,dp3,dq13)
+[lc1,dlc1]=computeDistance(p12,p13,dp12,dp13)
 
 %compute interaction forces
-[Fs12]=computeInteractionForce(p12,p2,ls2o,ks2,bs2);
-[Fs13]=computeInteractionForce(p13,p3,ls3o,ks3,bs3);
-[Fk12]=computeInteractionForce(q12,p2,0,kk2,bk2);
-[Fk13]=computeInteractionForce(q13,p3,0,kk3,bk3);
-[Fc11]=computeInteractionForce(p12,p13,0,kc1,bc1);
+[Fs12]=computeInteractionForce(p12,p2,ls2o,ks2,bs2,dp12,dp2);
+[Fs13]=computeInteractionForce(p13,p3,ls3o,ks3,bs3,dp13,dp3);
+[Fk12]=computeInteractionForce(q12,p2,0,kk2,bk2,dq12,dp2);
+[Fk13]=computeInteractionForce(q13,p3,0,kk3,bk3,dq13,dp3);
+
+[Fc11]=computeInteractionForce(p12,p13,0,kc1,bc1,dp12,dp13);
+
 
 %compute interaction torques
 Tk12 = -Fk12*ls2; %torque between base 12 and mass 2
@@ -82,22 +91,22 @@ result.ddp12 = ddp12;
 result.ddp13 = ddp13;
 result.ddp2 = ddp2;
 result.ddp3 = ddp3;
-result.ddth2 = ddth2;
-result.ddth3 = ddth3;
+result.ddth12 = ddth12;
+result.ddth13 = ddth13;
 
 result.dp12 = dp12;
 result.dp13 = dp13;
 result.dp2 = dp2;
 result.dp3 = dp3;
-result.dth2 = dth2;
-result.dth3 = dth3;
+result.dth12 = dth12;
+result.dth13 = dth13;
 
 result.p12 = p12;
 result.p13 = p13;
 result.p2 = p2;
 result.p3 = p3;
-result.th2 = th2;
-result.th3 = th3;
+result.th12 = th12;
+result.th13 = th13;
 
 result.Fc11 = Fc11;
 
@@ -129,32 +138,39 @@ end
 
 
 
-function [l,dl]=computeDistance(p,q)
+function [l,dl]=computeDistance(p,q,dp,dq)
 
 px=p(1);
 py=p(2);
 qx=q(1);
 qy=q(2);
+dpx=dp(1);
+dpy=dp(2);
+dqx=dq(1);
+dqy=dq(2);
 
 l = norm(p-q);
-d = l^2;
+d = l^2 + 1e-07;
 dl = 1/2*d^(-1/2)*(2*(px-qx)*(dpx-dqx)+2*(py-qy)*(dpy-dqy));
 
 end
 
 
-function F=computeInteractionForce(p,q,l0,k,b)
-    e=(p-q)/norm(p-q);
+function F=computeInteractionForce(p,q,l0,k,b,dp,dq)
+    e=(p-q)/(norm(p-q) +1e-07);
     
-    [l,dl]=computeDistance(p,q);
+    [l,dl]=computeDistance(p,q,dp,dq);
     
     F=k*((p-q)-l0*e) -b*dl*e;    
 end
 
-function position=computePositionByAngle(origin,distance,alpha)
-    
+function [position,dposition]=computePositionByAngle(origin,distance,alpha,dorigin,ddistance,dalpha)
+
     position=origin + distance*[cos(alpha);sin(alpha)];
-      
+    
+    dposition=dorigin + [ddistance*cos(alpha)-distance*dalpha*sin(alpha); ...
+                         ddistance*sin(alpha)+distance*dalpha*cos(alpha)];
+    
 end
 
 
