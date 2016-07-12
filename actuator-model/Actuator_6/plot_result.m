@@ -1,54 +1,35 @@
 %close all;
 
 %copy result to matrix
-[timeRange,n]=size(result);
+[~,timeRange]=size(result)
 for t = 1:1:timeRange
-    xx1(t,:)=result(t).xx1;
-    xx2(t,:)=result(t).xx2;
-    xx3(t,:)=result(t).xx3;
-    dxx1(t,:)=result(t).dxx1;
-    dxx2(t,:)=result(t).dxx2;
-    dxx3(t,:)=result(t).dxx3;
-    %xx02(t,:)=result(t).xx02;
-    %xx03(t,:)=result(t).xx03;
-    Flim1(t,:)=result(t).Flim1;
-    Flim2(t,:)=result(t).Flim2;
-    Flim3(t,:)=result(t).Flim3;
-    Fg2(t,:)=result(t).Fg2;
-    Fg3(t,:)=result(t).Fg3;
-    Fa1(t,:)=result(t).Fa1;
-    Fa2(t,:)=result(t).Fa2;
-    Fa3(t,:)=result(t).Fa3;
-    vd(t,:)=result(t).vd;
-    vdl1(t,:)=result(t).vdl(:,1);
-    vdl2(t,:)=result(t).vdl(:,2);
-    vdl3(t,:)=result(t).vdl(:,3);
-    ex1(t,:)=result(t).ex1;
-    ex2(t,:)=result(t).ex2;
-    ex3(t,:)=result(t).ex3;
-    l1(t,:)=result(t).l1;
-    l2(t,:)=result(t).l2;
-    l3(t,:)=result(t).l3;
-    dt_l1(t,:)=result(t).dt_l1;
-    dt_l2(t,:)=result(t).dt_l2;
-    dt_l3(t,:)=result(t).dt_l3;
-    dt_ld1(t,:)=result(t).dt_ld(:,1);
-    dt_ld2(t,:)=result(t).dt_ld(:,2);
-    dt_ld3(t,:)=result(t).dt_ld(:,3);
-    
-    km(t,:)=result(t).km';
+    p12(t,:)=result(t).p12;
+    p13(t,:)=result(t).p13;
+    p2(t,:)=result(t).p2;
+    p3(t,:)=result(t).p3;
+    p2n(t,:)=result(t).p2n;
+    p3n(t,:)=result(t).p3n;
+    q12(t,:)=result(t).q12;
+    q13(t,:)=result(t).q13;
+    ls2(t,:)=result(t).ls2;
+    ls3(t,:)=result(t).ls3;
+    dls2(t,:)=result(t).dls2;    
+    dls3(t,:)=result(t).dls3;
+    th12(t,:)=result(t).th12;
+    th13(t,:)=result(t).th13;
+    Fk12(t,:)=result(t).Fk12;
+    Fk13(t,:)=result(t).Fk13;
 end
+
 time=((1:1:timeRange)*result(1).param.simulator.h)';
-
-
-
 
 %now start plotting
 figure
 hold on
-plot(xx1(:,1),xx1(:,2),'r-');
-plot(xx2(:,1),xx2(:,2),'g-');
-plot(xx3(:,1),xx3(:,2),'b-');
+plot(p12(:,1),p12(:,2),'r-');
+plot(p13(:,1),p13(:,2),'g-');
+plot(p2(:,1),p2(:,2),'b-');
+plot(p3(:,1),p3(:,2),'k-');
 axis equal
 
 %figure
@@ -58,6 +39,22 @@ axis equal
 %axis equal
 %title('xx0');
 
+figure
+hold on
+plot(time,ls2,'g-');
+plot(time,ls3,'b-');
+plot(time,dls2,'g-.');
+plot(time,dls3,'b-.');
+title('ls2, ls3');
+
+figure
+hold on
+plot(time,th12*180/pi,'g-');
+plot(time,th13*180/pi,'b-');
+title('th12, th13');
+
+
+if 0
 figure
 hold on
 plot(time,vd(:,1),'r-.');
@@ -113,28 +110,37 @@ plot(time,l2,'g-');
 plot(time,l3,'b-');
 title('l');
 
+end
+
+
 figure
 videoPointer = VideoWriter('test.avi');
 open(videoPointer)
-for t=1:100:timeRange
+for t=1:10:timeRange
     hold on
-    line( [xx1(t,1) xx2(t,1)], [xx1(t,2) xx2(t,2)], 'Color', 'g');
-    line( [xx2(t,1) xx3(t,1)], [xx2(t,2) xx3(t,2)], 'Color', 'r');
-    line( [xx3(t,1) xx1(t,1)], [xx3(t,2) xx1(t,2)], 'Color', 'b');    
-    line( [xx1(t,1) xx1(t,1)+vd(t,1)], [xx1(t,2) xx1(t,2)+vd(t,2)], ...
-          'Color', 'k');    
+    line( [p12(t,1) p13(t,1)], [p12(t,2) p13(t,2)], 'Color', 'r');
+    line( [p13(t,1) p3(t,1)], [p13(t,2) p3(t,2)], 'Color', 'b');
+    line( [p12(t,1) p2(t,1)], [p12(t,2) p2(t,2)], 'Color', 'g');    
 
-    %line( [xx1(t,1) xx1(t,1)+ex2(t,1)], [xx1(t,2) xx1(t,2)+ex2(t,2)], ...
-    %      'Color','g');    
-    %line( [xx1(t,1) xx1(t,1)+ex3(t,1)], [xx1(t,2) xx1(t,2)+ex3(t,2)], ...
-    %      'Color','b');     
+    %plot( p2n(t,1), p2n(t,2), 'ro');
+    %plot( p3n(t,1), p3n(t,2), 'ro');    
+    plot( q12(t,1), q12(t,2), 'go');
+    plot( q13(t,1), q13(t,2), 'bo');
+            
+    line( [q12(t,1) q12(t,1)+Fk12(t,1)], [q12(t,2) q12(t,2)+Fk13(t,2)], ...
+          'Color', 'k');
+    line( [q13(t,1) q13(t,1)+Fk13(t,1)], [q13(t,2) q13(t,2)+Fk13(t,2)], ...
+          'Color', 'k');    
     
-    line( [xx1(t,1) xx1(t,1)+vdl1(t,1)], [xx1(t,2) xx1(t,2)+vdl1(t,2)], ...
-          'Color','r');    
-    line( [xx1(t,1) xx1(t,1)+vdl2(t,1)], [xx1(t,2) xx1(t,2)+vdl2(t,2)], ...
-          'Color','g');    
-    line( [xx1(t,1) xx1(t,1)+vdl3(t,1)], [xx1(t,2) xx1(t,2)+vdl3(t,2)], ...
-          'Color','b');     
+    
+    %line( [p1(t,1) p1(t,1)+vd(t,1)], [p1(t,2) p1(t,2)+vd(t,2)], ...
+    %      'Color', 'k');     
+    %line( [xx1(t,1) xx1(t,1)+vdl1(t,1)], [xx1(t,2) xx1(t,2)+vdl1(t,2)], ...
+    %      'Color','r');    
+    %line( [xx1(t,1) xx1(t,1)+vdl2(t,1)], [xx1(t,2) xx1(t,2)+vdl2(t,2)], ...
+    %      'Color','g');    
+    %line( [xx1(t,1) xx1(t,1)+vdl3(t,1)], [xx1(t,2) xx1(t,2)+vdl3(t,2)], ...
+    %      'Color','b');     
         
     line( [-10 10], [0 0]);  %gournd level
     axis equal
@@ -147,8 +153,6 @@ for t=1:100:timeRange
     clf;
 end
 close(videoPointer);
-
-figure;
 
 
 

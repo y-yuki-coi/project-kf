@@ -1,19 +1,19 @@
-function [yOut,result]=computeRungeKutta(timeSpan,y0,param,h)
+function [yOut,resultOut]=computeRungeKutta(timeSpan,y0,param,h)
     
     maxItr = length(timeSpan);
     yOut = [zeros(maxItr, length(y0))]; %initialize Y matrix
     
     y = y0;
     itr = 1;
-    
-    yOut(itr,:) = y0;
-    itr = itr + 1;
+    %yOut(itr,:) = y0;
+    %itr = itr + 1;
     
     for t = timeSpan
         t
-        [yNext result] = computeRungeKuttaStep(t,y,param,h)
+        [yNext resultNext] = computeRungeKuttaStep(t,y,param,h);
         
         yOut(itr,:) = yNext;        
+        resultOut(itr) = resultNext;        
         itr = itr+1;
         
         y = yNext;

@@ -41,21 +41,25 @@ dth13 = y(20);
 %compute sensor values
 [ls2,dls2]=computeDistance(p2,p12,dp2,dp12);
 [ls3,dls3]=computeDistance(p3,p13,dp3,dp13);
-[q12,dq12] = computePositionByAngle(p12,ls2,th12+phi12,dp12,dls2,dth12)
-[q13,dq13]= computePositionByAngle(p13,ls3,th13+phi13,dp13,dls3,dth13)
+[q12,dq12]=computePositionByAngle(p12,ls2,th12+phi12,dp12,dls2,dth12);
+[q13,dq13]=computePositionByAngle(p13,ls3,th13+phi13,dp13,dls3,dth13);
 
-[lk2,dlk2]=computeDistance(p2,q12,dp2,dq12)
-[lk3,dlk3]=computeDistance(p3,q13,dp3,dq13)
-[lc1,dlc1]=computeDistance(p12,p13,dp12,dp13)
+[lk2,dlk2]=computeDistance(p2,q12,dp2,dq12);
+[lk3,dlk3]=computeDistance(p3,q13,dp3,dq13);
+[lc1,dlc1]=computeDistance(p12,p13,dp12,dp13);
 
 %compute interaction forces
-[Fs12]=computeInteractionForce(p12,p2,ls2o,ks2,bs2,dp12,dp2);
-[Fs13]=computeInteractionForce(p13,p3,ls3o,ks3,bs3,dp13,dp3);
-[Fk12]=computeInteractionForce(q12,p2,0,kk2,bk2,dq12,dp2);
-[Fk13]=computeInteractionForce(q13,p3,0,kk3,bk3,dq13,dp3);
 
-[Fc11]=computeInteractionForce(p12,p13,0,kc1,bc1,dp12,dp13);
+%natural length
+[p2n,dp2n]=computePositionAtNaturalLength(p2,p12,dp2,dp12,ls2o);
+[p3n,dp3n]=computePositionAtNaturalLength(p3,p13,dp3,dp13,ls3o);
 
+[Fs12]=computeInteractionForce(p2,p2n,dp2,dp2n,ks2,bs2);
+[Fs13]=computeInteractionForce(p3,p3n,dp3,dp3n,ks3,bs3);
+
+[Fk12]=computeInteractionForce(p2,q12,dp2,dq12,kk2,bk2);
+[Fk13]=computeInteractionForce(p3,q13,dp3,dq13,kk3,bk3);
+[Fc11]=computeInteractionForce(p12,p13,dp12,dq13,kc1,bc1);
 
 %compute interaction torques
 Tk12 = -Fk12*ls2; %torque between base 12 and mass 2
@@ -67,6 +71,20 @@ persistent po2;
 persistent po3;
 [Fg2,po2Refresh]=computeGroundReactionForce(p2,dp2,po2,yg,kg,bg,isRefresh);
 [Fg3,po3Refresh]=computeGroundReactionForce(p3,dp3,po3,yg,kg,bg,isRefresh);
+po2 = po2Refresh;
+po3 = po3Refresh;
+
+%Fg2=[0;0];
+%Fg3=[0;0];
+Fs12=[0;0];
+Fs13=[0;0];
+Fc11=[0;0];
+
+%Fk12=[0;0];
+%Fk13=[0;0];
+Tk12=0;
+Tk13=0;
+Tr11=0;
 
 %compute control forces and torque
 Fa12 = [0;0];
@@ -74,8 +92,8 @@ Fa13 = [0;0];
 Ta11 = 0;
 
 %dynamics
-ddp12  = (m1*gg -Fs12 -Fc11    -Fa12 -Fk13)/m1;
-ddp13  = (m1*gg -Fs13 +Fc11    -Fa13 -Fk12)/m1;
+ddp12  = (m1*gg -Fs12 -Fc11    -Fa12 -Fk12)/m1;
+ddp13  = (m1*gg -Fs13 +Fc11    -Fa13 -Fk13)/m1;
 ddp2   = (m2*gg +Fs12     +Fg2+Fa12 +Fk12)/m2;
 ddp3   = (m3*gg +Fs13     +Fg3+Fa13 +Fk13)/m3;
 ddth12 = (                    -Ta11 +Tk12 -Tr11)/I1;
@@ -132,6 +150,11 @@ result.lk3 = lk3;
 result.dlk2 = dlk2;
 result.dlk3 = dlk3;
 
+result.p2n = p2n;
+result.p3n = p3n;
+result.q12 = q12;
+result.q13 = q13;
+
 result.param = param;
 
 end
@@ -140,28 +163,38 @@ end
 
 function [l,dl]=computeDistance(p,q,dp,dq)
 
-px=p(1);
-py=p(2);
-qx=q(1);
-qy=q(2);
-dpx=dp(1);
-dpy=dp(2);
-dqx=dq(1);
-dqy=dq(2);
+    px=p(1);
+    py=p(2);
+    qx=q(1);
+    qy=q(2);
+    dpx=dp(1);
+    dpy=dp(2);
+    dqx=dq(1);
+    dqy=dq(2);
+    
+    l = norm(p-q);
+    d = l^2 + 1e-07;
+    dl = 1/2*d^(-1/2)*(2*(px-qx)*(dpx-dqx)+2*(py-qy)*(dpy-dqy));
+    
+end
 
-l = norm(p-q);
-d = l^2 + 1e-07;
-dl = 1/2*d^(-1/2)*(2*(px-qx)*(dpx-dqx)+2*(py-qy)*(dpy-dqy));
+function [pn,dpn]=computePositionAtNaturalLength(p,q,dp,dq,lo)
+    
+    pn = q + (p-q)/norm(p-q)*lo;
+    dpn = dq +(dp-dq)/norm(p-q)*lo + (p-q)*(-1/2*((p-q)'*(p-q))^(-3/2)*(dp-dq)'*(p-q)*2*lo);
 
 end
 
 
-function F=computeInteractionForce(p,q,l0,k,b,dp,dq)
-    e=(p-q)/(norm(p-q) +1e-07);
+function F=computeInteractionForce(p,q,dp,dq,k,b)
     
-    [l,dl]=computeDistance(p,q,dp,dq);
+    F = -k*(p-q); %-b*(dp-dq);
     
-    F=k*((p-q)-l0*e) -b*dl*e;    
+    %e=(p-q)/(norm(p-q));    
+    %[l,dl]=computeDistance(p,q,dp,dq);    
+    %F=k*((p-q)-l0*e) -b*dl*e;        
+
+    
 end
 
 function [position,dposition]=computePositionByAngle(origin,distance,alpha,dorigin,ddistance,dalpha)
@@ -193,5 +226,5 @@ function [Fg,poRefresh]=computeGroundReactionForce(p,dp,po,yg,kg,bg,isRefresh)
         Fg(1) = -kg * (p(1) - po(1)) -  bg*dp(1);
         Fg(2) = -kg * (p(2) - yg ) -min(bg*dp(2),0); 
     end
-
+    
 end

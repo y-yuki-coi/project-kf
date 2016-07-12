@@ -26,8 +26,8 @@ param.bc=100;
 %initial conditions
 po12 = [0;1.0];
 po13 = po12;
-tho2 =  60*pi/180;
-tho3 = 120*pi/180;
+tho2 =  120*pi/180;
+tho3 =   60*pi/180;
 lo = po12(2)*2/sqrt(3);
 po2 = po12 -lo*[cos(tho2); sin(tho2)];
 po3 = po13 -lo*[cos(tho3); sin(tho3)];
@@ -43,14 +43,14 @@ param.phi12 = tho2 + pi;
 param.phi13 = tho3 + pi;
 
 %simulator conditions
-param.simulator.timeSpan = [0:1e-03:2];
+param.simulator.timeSpan = [0:1e-03:0.3];
 param.simulator.h = 1e-03;
 %param.simulator.odeOptions = odeset('RelTol', 1e-4, 'AbsTol', 1e-4);
 
 %start simulation
 h   = param.simulator.h;
 timeSpan   = param.simulator.timeSpan;
-initialCondition = [po12; po13; po2; po3; tho2; tho3; ...
+initialCondition = [po12; po13; po2; po3; 0;    0; ...
                     0;0;  0;0;  0;0; 0;0; 0;    0 ];
 
 [y,result]=computeRungeKutta(timeSpan,initialCondition,param,h);
