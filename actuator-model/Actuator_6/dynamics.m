@@ -85,11 +85,14 @@ po2 = po2Refresh;
 po3 = po3Refresh;
 
 %compute control forces and torque
-Fa12 = -100000*(1.2-ls2)*(p12-p2)/norm(p12-p2);
-Fa13 = -100000*(1.2-ls3)*(p13-p3)/norm(p13-p3);
-Ta11 = 10*(pi/4-th12);
+Fa12 = [0;0];%-100000*(1.2-ls2)*(p12-p2)/norm(p12-p2);
+Fa13 = [0;0];%-100000*(1.2-ls3)*(p13-p3)/norm(p13-p3);
+Ta11 = 100;%10*(pi/4-th12);
 
 %dynamics
+A = (m1*gg   -Fa12 -Fs12)/m1;
+B = (m1*gg   -Fa13 -Fs13)/m1;;
+Fc11 = m1/2*(B-A);
 ddp12  = (m1*gg  +Fc11    -Fa12 -Fs12)/m1;
 ddp13  = (m1*gg  -Fc11    -Fa13 -Fs13)/m1;
 ddp2   = (m2*gg      +Fg2 +Fa12 +Fs12)/m2;
@@ -98,7 +101,6 @@ ddth12 = (Tk12                -Ta11 )/I1;
 ddth13 = (Tk13                +Ta11 )/I1;
 ddth2  = (-Tk12                    )/I2;
 ddth3  = (-Tk13                    )/I3;
-
 
 dy=[... 
     dp12; dp13; dp2; dp3; dth12; dth13; dth2; dth3;...
