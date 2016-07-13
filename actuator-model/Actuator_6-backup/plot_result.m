@@ -26,8 +26,7 @@ for t = 1:1:timeRange
     Fk13(t,:)=result(t).Fk13;    
     Tk12(t,:)=result(t).Tk12;
     Tk13(t,:)=result(t).Tk13;
-
-    Fc11(t,:)=result(t).Fc11;
+   
 end
 
 time=((1:1:timeRange)*result(1).param.simulator.h)';
@@ -148,23 +147,18 @@ open(videoPointer)
 for t=1:10:timeRange
     hold on
     line( [p12(t,1) p13(t,1)], [p12(t,2) p13(t,2)], 'Color', 'r');
-    line( [p13(t,1) p3(t,1)], [p13(t,2) p3(t,2)], 'Color', 'b');
-    line( [p12(t,1) p2(t,1)], [p12(t,2) p2(t,2)], 'Color', 'g');    
-    
-    %line( [p13(t,1) q13(t,1)], [p13(t,2) q13(t,2)], 'Color', 'b');
-    %line( [p12(t,1) q12(t,1)], [p12(t,2) q12(t,2)], 'Color', 'g');    
-    
-    %plot( p2n(t,1), p2n(t,2), 'gx');
-    %plot( p3n(t,1), p3n(t,2), 'bx');    
+    line( [p13(t,1) q13(t,1)], [p13(t,2) q13(t,2)], 'Color', 'b');
+    line( [p12(t,1) q12(t,1)], [p12(t,2) q12(t,2)], 'Color', 'g');    
+
+    plot( p2n(t,1), p2n(t,2), 'gx');
+    plot( p3n(t,1), p3n(t,2), 'bx');    
     
     plot( p2(t,1), p2(t,2), 'go');
     plot( p3(t,1), p3(t,2), 'bo');
             
-    
-    
-    line( [p12(t,1) p12(t,1)+Fc11(t,1)], [p12(t,2) p12(t,2)+Fc11(t,2)], ...
+    line( [q12(t,1) q12(t,1)+Fk12(t,1)], [q12(t,2) q12(t,2)+Fk12(t,2)], ...
           'Color', 'k');
-    line( [p13(t,1) p13(t,1)-Fc11(t,1)], [p13(t,2) p13(t,2)-Fc11(t,2)], ...
+    line( [q13(t,1) q13(t,1)+Fk13(t,1)], [q13(t,2) q13(t,2)+Fk13(t,2)], ...
           'Color', 'k');    
     
     thDistance=0.1;

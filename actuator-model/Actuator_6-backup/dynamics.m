@@ -5,8 +5,6 @@ m1=param.mass(1);
 m2=param.mass(2);
 m3=param.mass(3);
 I1=param.I1;
-I2=param.I2;
-I3=param.I3;
 gg=param.gg;
 ks2=param.ks(2);
 ks3=param.ks(3);
@@ -33,16 +31,12 @@ p2 =y(5:6);
 p3 =y(7:8);
 th12 = y(9);
 th13 = y(10);
-th2 = y(11);
-th3 = y(12);
-dp12=y(13:14);
-dp13=y(15:16);
-dp2 =y(17:18);
-dp3 =y(19:20);
-dth12 = y(21);
-dth13 = y(22);
-dth2 = y(23);
-dth3 = y(24);
+dp12=y(11:12);
+dp13=y(13:14);
+dp2 =y(15:16);
+dp3 =y(17:18);
+dth12 = y(19);
+dth13 = y(20);
 
 %compute sensor values
 [ls2,dls2]=computeDistance(p2,p12,dp2,dp12);
@@ -69,12 +63,9 @@ dth3 = y(24);
 
 
 %compute interaction torques
-%Tk12 = Fk12'*(q12-p12); %torque between base 12 and mass 2
-%Tk13 = Fk13'*(q13-p12); %torque between base 13 and mass 3
+Tk12 = Fk12'*(q12-p12); %torque between base 12 and mass 2
+Tk13 = Fk13'*(q13-p12); %torque between base 13 and mass 3
 Tr11=0; %torque between base 12 and base 13
-
-Tk12 = computeInteractionTorque(th2,th12,dth2,dth12,kk2,bk2);
-Tk13 = computeInteractionTorque(th3,th13,dth3,dth13,kk3,bk3);
 
 %compute ground reaction force
 persistent po2;
@@ -84,27 +75,36 @@ persistent po3;
 po2 = po2Refresh;
 po3 = po3Refresh;
 
+%Fg2=[0;0];
+%Fg3=[0;0];
+Fs12=[0;0];
+Fs13=[0;0];
+%Fc11=[0;0];
+
+%Fk12=[0;0];
+%Fk13=[0;0];
+%Tk12=0;
+%Tk13=0;
+
+Tr11=0;
+
 %compute control forces and torque
-Fa12 = -100000*(1.2-ls2)*(p12-p2)/norm(p12-p2);
-Fa13 = -100000*(1.2-ls3)*(p13-p3)/norm(p13-p3);
-Ta11 = 10*(pi/4-th12);
+Fa12 = [0;0];
+Fa13 = [0;0];
+Ta11 = 0;
 
 %dynamics
-ddp12  = (m1*gg  +Fc11    -Fa12 -Fs12)/m1;
-ddp13  = (m1*gg  -Fc11    -Fa13 -Fs13)/m1;
-ddp2   = (m2*gg      +Fg2 +Fa12 +Fs12)/m2;
-ddp3   = (m3*gg      +Fg3 +Fa13 +Fs13)/m3;
-ddth12 = (Tk12                -Ta11 )/I1;
-ddth13 = (Tk13                +Ta11 )/I1;
-ddth2  = (-Tk12                    )/I2;
-ddth3  = (-Tk13                    )/I3;
-
+ddp12  = (m1*gg -Fs12 +Fc11    -Fa12 +Fk12)/m1;
+ddp13  = (m1*gg -Fs13 -Fc11    -Fa13 +Fk13)/m1;
+ddp2   = (m2*gg +Fs12     +Fg2+Fa12 -Fk12)/m2;
+ddp3   = (m3*gg +Fs13     +Fg3+Fa13 -Fk13)/m3;
+ddth12 = (                    -Ta11 +Tk12 -Tr11)/I1;
+ddth13 = (                    +Ta11 +Tk13 +Tr11)/I1;
 
 dy=[... 
-    dp12; dp13; dp2; dp3; dth12; dth13; dth2; dth3;...
-    ddp12; ddp13; ddp2; ddp3; ddth12; ddth13; ddth2; ddth3...      
+    dp12; dp13; dp2; dp3; dth12; dth13;...
+    ddp12; ddp13; ddp2; ddp3; ddth12; ddth13;...      
    ];
-
 
 %return results
 result.ddp12 = ddp12;
@@ -195,17 +195,9 @@ function F=computeInteractionForce(p,q,dp,dq,k,b)
     %e=(p-q)/(norm(p-q));    
     %[l,dl]=computeDistance(p,q,dp,dq);    
     %F=k*((p-q)-l0*e) -b*dl*e;        
+
     
 end
-
-function T=computeInteractionTorque(p,q,dp,dq,k,b)
-    
-    T = -k*(p-q)-b*(dp-dq);
-        
-end
-
-
-
 
 function [position,dposition]=computePositionByAngle(origin,distance,alpha,dorigin,ddistance,dalpha)
 
