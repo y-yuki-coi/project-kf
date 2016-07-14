@@ -63,18 +63,30 @@ dth3 = y(24);
 [Fs12]=computeInteractionForce(p2,p2n,dp2,dp2n,ks2,bs2);
 [Fs13]=computeInteractionForce(p3,p3n,dp3,dp3n,ks3,bs3);
 [Fc11]=computeInteractionForce(p12,p13,dp12,dq13,kc1,bc1);
+Fs12=[0;0];
+Fs13=[0;0];
+Fc11=[0;0];
 
-[Fk12]=computeInteractionForce(p2,q12,dp2,dq12,kk2,bk2);
-[Fk13]=computeInteractionForce(p3,q13,dp3,dq13,kk3,bk3);
+%[Fk12]=computeInteractionForce(p2,q12,dp2,dq12,kk2,bk2);
+%[Fk13]=computeInteractionForce(p3,q13,dp3,dq13,kk3,bk3);
 
+dk12 = rot90((q12-p12)/norm(q12-p12))';
+dk13 = rot90((q13-p13)/norm(q13-p13))';
+distk12=dk12'*(p2-q12);
+distk13=dk13'*(p3-q13);
+ddistk12=dk12'*(dp2-dq12);
+ddistk13=dk13'*(dp3-dq13);
+fk12=-kk2*distk12 - bk2*ddistk12;
+fk13=-kk3*distk13 - bk3*ddistk13;
+[Fk12]=fk12*dk12;
+[Fk13]=fk13*dk13;
 
 %compute interaction torques
-%Tk12 = Fk12'*(q12-p12); %torque between base 12 and mass 2
-%Tk13 = Fk13'*(q13-p12); %torque between base 13 and mass 3
+Tk12 = Fk12'*(q12-p12); %torque between base 12 and mass 2
+Tk13 = Fk13'*(q13-p13); %torque between base 13 and mass 3
 Tr11=0; %torque between base 12 and base 13
-
-Tk12 = computeInteractionTorque(th2,th12,dth2,dth12,kk2,bk2);
-Tk13 = computeInteractionTorque(th3,th13,dth3,dth13,kk3,bk3);
+%Tk12 = computeInteractionTorque(th2,th12,dth2,dth12,kk2,bk2);
+%Tk13 = computeInteractionTorque(th3,th13,dth3,dth13,kk3,bk3);
 
 %compute ground reaction force
 persistent po2;
@@ -85,20 +97,20 @@ po2 = po2Refresh;
 po3 = po3Refresh;
 
 %compute control forces and torque
-Fa12 = [0;0];%-100000*(1.2-ls2)*(p12-p2)/norm(p12-p2);
-Fa13 = [0;0];%-100000*(1.2-ls3)*(p13-p3)/norm(p13-p3);
-Ta11 = 100;%10*(pi/4-th12);
+Fa12 = [0;0];
+Fa13 = [0;0];
+Ta11 = 0;
 
 %dynamics
-A = (m1*gg   -Fa12 -Fs12)/m1;
-B = (m1*gg   -Fa13 -Fs13)/m1;;
+A = (m1*gg   -Fa12 -Fs12 + Fk12)/m1;
+B = (m1*gg   -Fa13 -Fs13 + Fk13)/m1;;
 Fc11 = m1/2*(B-A);
-ddp12  = (m1*gg  +Fc11    -Fa12 -Fs12)/m1;
-ddp13  = (m1*gg  -Fc11    -Fa13 -Fs13)/m1;
-ddp2   = (m2*gg      +Fg2 +Fa12 +Fs12)/m2;
-ddp3   = (m3*gg      +Fg3 +Fa13 +Fs13)/m3;
-ddth12 = (Tk12                -Ta11 )/I1;
-ddth13 = (Tk13                +Ta11 )/I1;
+ddp12  = (m1*gg  +Fc11    -Fa12 -Fs12 +Fk12)/m1;
+ddp13  = (m1*gg  -Fc11    -Fa13 -Fs13 +Fk13)/m1;
+ddp2   = (m2*gg      +Fg2 +Fa12 +Fs12 -Fk12)/m2;
+ddp3   = (m3*gg      +Fg3 +Fa13 +Fs13 -Fk13)/m3;
+ddth12 = ( Tk12               -Ta11 )/I1;
+ddth13 = ( Tk13               +Ta11 )/I1;
 ddth2  = (-Tk12                    )/I2;
 ddth3  = (-Tk13                    )/I3;
 

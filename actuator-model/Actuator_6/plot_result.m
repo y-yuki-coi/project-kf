@@ -1,4 +1,4 @@
-%close all;
+close all;
 
 %copy result to matrix
 [~,timeRange]=size(result)
@@ -142,7 +142,8 @@ title('l');
 end
 
 
-figure
+figure(1)
+set(gcf,'Color',[1 1 1]) ;
 videoPointer = VideoWriter('test.avi');
 open(videoPointer)
 for t=1:10:timeRange
@@ -157,15 +158,23 @@ for t=1:10:timeRange
     %plot( p2n(t,1), p2n(t,2), 'gx');
     %plot( p3n(t,1), p3n(t,2), 'bx');    
     
+    plot( q12(t,1), q12(t,2), 'gx');
+    plot( q13(t,1), q13(t,2), 'bx');    
+    
     plot( p2(t,1), p2(t,2), 'go');
     plot( p3(t,1), p3(t,2), 'bo');
-            
-    
-    
+                    
     line( [p12(t,1) p12(t,1)+Fc11(t,1)], [p12(t,2) p12(t,2)+Fc11(t,2)], ...
           'Color', 'k');
     line( [p13(t,1) p13(t,1)-Fc11(t,1)], [p13(t,2) p13(t,2)-Fc11(t,2)], ...
           'Color', 'k');    
+    
+    line( [q12(t,1) q12(t,1)+Fk12(t,1)], [q12(t,2) q12(t,2)+Fk12(t,2)], ...
+          'Color', 'k');
+    
+    line( [q13(t,1) q13(t,1)+Fk13(t,1)], [q13(t,2) q13(t,2)+Fk13(t,2)], ...
+          'Color', 'k');
+    
     
     thDistance=0.1;
     th12direction = thDistance*[cos(th12(t));sin(th12(t))];
@@ -187,17 +196,19 @@ for t=1:10:timeRange
         
     line( [-10 10], [0 0]);  %gournd level
     axis equal
-      
+    
     xlim([-2 4]);
     ylim([-1 2]);
     
-    frame = getframe(gcf);
-    writeVideo(videoPointer,frame);                    
+    %if t > 2
+    drawnow;
+    frameList = getframe(gcf);    
+    writeVideo(videoPointer,frameList);    
     clf;
+    %end
 end
+
 close(videoPointer);
-
-
 
 
 if 0
