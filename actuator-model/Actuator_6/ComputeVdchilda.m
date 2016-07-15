@@ -14,7 +14,7 @@ function [vdchilda,km]=ComputeVdchilda( ex, vi, vd )
         
         %compute km 
         km(itr1)=exp(-4*log(2)*(norm(vdl(:,itr1)-vi(:,itr1))^2+eps1)/(norm(vdl(:,itr1))^2+eps2));
-        km(itr1)=0;
+        %km(itr1)=0;
         
         for itr2=1:1:num;
             exother=ex(:,itr2);                    

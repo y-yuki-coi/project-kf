@@ -31,7 +31,9 @@ for t = 1:1:timeRange
     Ta11(t,:)=result(t).Ta11;
     Fa12(t,:)=result(t).Fa12;
     Fa13(t,:)=result(t).Fa13;    
-    
+
+    vd(t,:)=result(t).vd;    
+
     ex(t,:,:)=result(t).ex;
     tip12(t,:)=result(t).tip12;
     omegad12(t,:)=result(t).omegad12;
@@ -40,6 +42,7 @@ for t = 1:1:timeRange
     vi(t,:,:)=result(t).vi;
     
     Fc11(t,:)=result(t).Fc11;
+    km(t,:)=result(t).km;
 end
 
 time=((1:1:timeRange)*result(1).param.simulator.h)';
@@ -99,7 +102,12 @@ plot(time,dth12,'r-');
 plot(time,omegad12,'r-.');
 title('dth12-,omegad12-.');
 
-
+figure
+hold on
+plot(time,km(:,1),'r-');
+plot(time,km(:,2),'g-');
+plot(time,km(:,3),'b-');
+title('km');
 
 if 0
 figure
@@ -166,11 +174,11 @@ figure;
 videoPointer = VideoWriter('test.avi');
 open(videoPointer)
 
-for t=1:10:timeRange;%:10:timeRange
+for t=1:100:timeRange;%:10:timeRange
     hold on
-    line( [p12(t,1) p13(t,1)], [p12(t,2) p13(t,2)], 'Color', 'r');
-    line( [p13(t,1) p3(t,1)], [p13(t,2) p3(t,2)], 'Color', 'b');
-    line( [p12(t,1) p2(t,1)], [p12(t,2) p2(t,2)], 'Color', 'g');    
+    %line( [p12(t,1) p13(t,1)], [p12(t,2) p13(t,2)], 'Color', 'r');
+    %line( [p13(t,1) p3(t,1)], [p13(t,2) p3(t,2)], 'Color', 'b');
+    %line( [p12(t,1) p2(t,1)], [p12(t,2) p2(t,2)], 'Color', 'g');    
     
     %line( [p13(t,1) q13(t,1)], [p13(t,2) q13(t,2)], 'Color', 'b');
     %line( [p12(t,1) q12(t,1)], [p12(t,2) q12(t,2)], 'Color', 'g');    
@@ -198,9 +206,9 @@ for t=1:10:timeRange;%:10:timeRange
     %      'Color', 'k');
     
     %line( [p12(t,1) p12(t,1)+Fs12(t,1)], [p12(t,2) p12(t,2)+Fs12(t,2)], ...
-    %      'Color', 'k');
+    %      'Color', 'g');
     %line( [p13(t,1) p13(t,1)+Fs13(t,1)], [p13(t,2) p13(t,2)+Fs13(t,2)], ...
-    %      'Color', 'k');    
+    %      'Color', 'b');    
     
     line( [p12(t,1) p12(t,1)+Fa12(t,1)], [p12(t,2) p12(t,2)+Fa12(t,2)], ...
           'Color', 'g');    
@@ -222,8 +230,8 @@ for t=1:10:timeRange;%:10:timeRange
     %line( [p12(t,1) p12(t,1)+ex(t,1,3)], [p12(t,2) p12(t,2)+ex(t,2,3)], ...
     %      'Color', 'b');    
     
-    %line( [p1(t,1) p1(t,1)+vd(t,1)], [p1(t,2) p1(t,2)+vd(t,2)], ...
-    %      'Color', 'k');     
+    line( [tip12(t,1) tip12(t,1)+vd(t,1)], [tip12(t,2) tip12(t,2)+vd(t,2)], ...
+          'Color', 'k');     
     %line( [xx1(t,1) xx1(t,1)+vdl1(t,1)], [xx1(t,2) xx1(t,2)+vdl1(t,2)], ...
     %      'Color','r');    
     %line( [xx1(t,1) xx1(t,1)+vdl2(t,1)], [xx1(t,2) xx1(t,2)+vdl2(t,2)], ...
@@ -232,19 +240,19 @@ for t=1:10:timeRange;%:10:timeRange
     %      'Color','b');     
     
     
-    %line( [tip12(t,1) tip12(t,1)+vdchilda(t,1,1)], [tip12(t,2) tip12(t,2)+vdchilda(t,2,1)], ...
-    %      'Color','r');    
-    %line( [tip12(t,1) tip12(t,1)+vdchilda(t,1,2)], [tip12(t,2) tip12(t,2)+vdchilda(t,2,2)], ...
-    %      'Color','g');    
-    %line( [tip12(t,1) tip12(t,1)+vdchilda(t,1,3)], [tip12(t,2) tip12(t,2)+vdchilda(t,2,3)], ...
-    %      'Color','b');     
-    
-    line( [tip12(t,1) tip12(t,1)+vi(t,1,1)], [tip12(t,2) tip12(t,2)+vi(t,2,1)], ...
+    line( [tip12(t,1) tip12(t,1)+vdchilda(t,1,1)], [tip12(t,2) tip12(t,2)+vdchilda(t,2,1)], ...
           'Color','r');    
-    line( [tip12(t,1) tip12(t,1)+vi(t,1,2)], [tip12(t,2) tip12(t,2)+vi(t,2,2)], ...
+    line( [tip12(t,1) tip12(t,1)+vdchilda(t,1,2)], [tip12(t,2) tip12(t,2)+vdchilda(t,2,2)], ...
           'Color','g');    
-    line( [tip12(t,1) tip12(t,1)+vi(t,1,3)], [tip12(t,2) tip12(t,2)+vi(t,2,3)], ...
+    line( [tip12(t,1) tip12(t,1)+vdchilda(t,1,3)], [tip12(t,2) tip12(t,2)+vdchilda(t,2,3)], ...
           'Color','b');     
+    
+    %line( [tip12(t,1) tip12(t,1)+vi(t,1,1)], [tip12(t,2) tip12(t,2)+vi(t,2,1)], ...
+     %     'Color','r');    
+    %line( [tip12(t,1) tip12(t,1)+vi(t,1,2)], [tip12(t,2) tip12(t,2)+vi(t,2,2)], ...
+    %      'Color','g');    
+    %line( [tip12(t,1) tip12(t,1)+vi(t,1,3)], [tip12(t,2) tip12(t,2)+vi(t,2,3)], ...
+    %      'Color','b');     
     
     
     %line( [tip12(t,1) tip12(t,1)+ex(t,1,1)], [tip12(t,2) tip12(t,2)+ex(t,2,1)], ...

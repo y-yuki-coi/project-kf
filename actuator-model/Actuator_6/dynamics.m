@@ -63,8 +63,10 @@ dth3 = y(24);
 %natural length
 [p2n,dp2n]=computePositionAtNaturalLength(p2,p12,dp2,dp12,ls2o);
 [p3n,dp3n]=computePositionAtNaturalLength(p3,p13,dp3,dp13,ls3o);
-[Fs12]=computeInteractionForce(p2,p2n,dp2,dp2n,ks2,bs2);
-[Fs13]=computeInteractionForce(p3,p3n,dp3,dp3n,ks3,bs3);
+%[Fs12]=computeInteractionForce(p2,p2n,dp2,dp2n,ks2,bs2);
+%[Fs13]=computeInteractionForce(p3,p3n,dp3,dp3n,ks3,bs3);
+[Fs12]=computeInteractionForce2(p2,p12,dp2,dp12,ks2,bs2,ls2o);
+[Fs13]=computeInteractionForce2(p3,p13,dp3,dp13,ks3,bs3,ls3o);
 
 %[Fc11]=computeInteractionForce(p12,p13,dp12,dq13,kc1,bc1);
 %Fs12=[0;0];
@@ -108,8 +110,8 @@ vd = [vdx; desiredHeightGain*(desiredHeight-p12(2))];
 [ex,vi] = computeKinematicValues(p12,p13,p2,p3,th12,th13,th2,th3,Fg2,Fg3,tip12,dp12,dp13,dp2,dp3,dth12,r1,dls2,dls3);
 [vdchilda,km]=ComputeVdchilda( ex, vi, vd );
 
-Fa12 = 0*actuatorGain(2)*(vdchilda(:,2)-vi(:,2)); %-0*(p12-p2);
-Fa13 = 0*actuatorGain(3)*(vdchilda(:,3)-vi(:,3)); %-0*(p13-p3);
+Fa12 = actuatorGain(2)*(vdchilda(:,2)-vi(:,2)); %-0*(p12-p2);
+Fa13 = actuatorGain(3)*(vdchilda(:,3)-vi(:,3)); %-0*(p13-p3);
 
 %Fa12 = 20*ex(:,2);
 %Fa13 = 0*ex(:,3);
@@ -120,13 +122,13 @@ Ta11 = actuatorGain(1)*(omegad12-dth12);
 %Ta11 = actuatorGain(1)*omegad12;
 
 %dynamics
-A = (m1*gg   +Fa12 +Fs12 + Fk12)/m1;
-B = (m1*gg   +Fa13 +Fs13 + Fk13)/m1;;
+A = (m1*gg   +Fa12 -Fs12 + Fk12)/m1;
+B = (m1*gg   +Fa13 -Fs13 + Fk13)/m1;
 Fc11 = m1/2*(B-A);
-ddp12  = (m1*gg  +Fc11    +Fa12 +Fs12 +Fk12)/m1;
-ddp13  = (m1*gg  -Fc11    +Fa13 +Fs13 +Fk13)/m1;
-ddp2   = (m2*gg      +Fg2 -Fa12 -Fs12 -Fk12)/m2;
-ddp3   = (m3*gg      +Fg3 -Fa13 -Fs13 -Fk13)/m3;
+ddp12  = (m1*gg  +Fc11    +Fa12 -Fs12 +Fk12)/m1;
+ddp13  = (m1*gg  -Fc11    +Fa13 -Fs13 +Fk13)/m1;
+ddp2   = (m2*gg      +Fg2 -Fa12 +Fs12 -Fk12)/m2;
+ddp3   = (m3*gg      +Fg3 -Fa13 +Fs13 -Fk13)/m3;
 ddth12 = ( Tk12               +Ta11 )/I1;
 ddth13 = ( Tk13               -Ta11 )/I1;
 ddth2  = (-Tk12                    )/I2;
@@ -232,7 +234,7 @@ function F=computeInteractionForce2(p,q,dp,dq,k,b,lo)
     
     e=(p-q)/(norm(p-q));    
     
-    F=k*((p-q)-l0*e) -b*(p-q)/norm(p-q)*(dp-dq)
+    F=-k*(p-q-lo*e) -b*(p-q)'/norm(p-q)*(dp-dq)*e;
 
     
 end
@@ -302,20 +304,20 @@ function [ex,vi] = computeKinematicValues(p12,p13,p2,p3,th12,th13,th2,th3,Fg2,Fg
         pfore = p2;
         phind = p3;        
         if norm(Fg2) > norm(Fg3)           
-            ex1 = (phind-pfore)/norm(phind-pfore);
+           ex(:,1) = rot2dVector((tip12-p12)/norm(tip12-p12),-pi/2); 
         else
-            ex1 = -(phind-pfore)/norm(phind-pfore);
+           ex(:,1) = -rot2dVector((tip12-p12)/norm(tip12-p12),-pi/2); 
         end        
     else
         pfore = p3;
         phind = p2;      
         if norm(Fg2) > norm(Fg3)
-            ex1 = -(phind-pfore)/norm(phind-pfore);            
+           ex(:,1) = -rot2dVector((tip12-p12)/norm(tip12-p12),-pi/2); 
         else
-            ex1 = (phind-pfore)/norm(phind-pfore);
+           ex(:,1) = rot2dVector((tip12-p12)/norm(tip12-p12),-pi/2); 
         end
     end
-    ex(:,1) = rot2dVector((tip12-p12)/norm(tip12-p12),-pi/2); 
+    %ex(:,1) = rot2dVector((tip12-p12)/norm(tip12-p12),-pi/2); 
     ex(:,2) = (p12-p2)/norm(p12-p2);
     ex(:,3) = (p13-p3)/norm(p13-p3);
     

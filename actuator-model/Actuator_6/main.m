@@ -2,7 +2,7 @@ clear all
 close all
 
 %define parameters
-param.mass=[48;11;11];
+param.mass=[24;11;11];
 param.r1 = 0.1;
 param.r2 = 0.1;
 param.r3 = 0.1;
@@ -10,8 +10,7 @@ param.I1 = 1/2*param.mass(1)*(param.r1)^2;
 param.I2 = 1/2*param.mass(2)*(param.r2)^2;
 param.I3 = 1/2*param.mass(3)*(param.r3)^2;
 param.ks=[1;1;1]*10000;
-param.bs=[1;1;1]*0;
-param.mass=[48;11;11];
+param.bs=[1;1;1]*100;
 param.gg=[0;-9.8];
 param.yg = 0;
 param.kg = 100000;
@@ -21,12 +20,12 @@ param.bk=[1;1;1]*100;
 param.vdx = 1.0;
 param.desiredHeight = 1;
 param.desiredHeightGain = 1;
-param.actuatorGain = [1;1;1];%torque1,force2,force3
+param.actuatorGain = [1;1;1]*100;%torque1,force2,force3
 
 %initial conditions
 po12 = [0;1.0];
 po13 = po12;
-tho12 = 20*pi/180;
+tho12 = 30*pi/180;
 tho13 = -30*pi/180;
 tho2 = tho12;
 tho3 = tho13;
