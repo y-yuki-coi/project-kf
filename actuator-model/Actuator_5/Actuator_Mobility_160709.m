@@ -14,7 +14,7 @@ param.m3 = 11;
 param.G1 = 1000; %feedback gain
 param.G2 = 1000;
 param.G3 = 1000;
-param.vdx = 1.5; % desired speed m/s
+param.vdx = 1.0; % desired speed m/s
 param.desiredHeight = 1.2; % now testing
 param.desiredHeightGain = 1; % now testing
 param.yg = 0.00; % terrain (horizontal)
@@ -35,7 +35,7 @@ param.llim1=param.l0*1.1;
 param.llim2=param.l0*1.1;
 param.llim3=param.l0*1.1;
 param.simulator.h = 1e-04;
-param.simulator.maxItr = 1000;
+param.simulator.maxItr = 20000;
 param.zeroLevel = 1e-03;
 
 %rename params
@@ -48,6 +48,9 @@ x1 = 0 ; y1 = param.y01 ; % initial position for gait
                           %thi = [0 120/180*pi 60/180*pi] ;
 thi = [0 60/180*pi 145/180*pi] ;
 thi = [0 145/180*pi 60/180*pi] ;
+
+thi = [0 60/180*pi 120/180*pi] ;
+%thi = [0 120/180*pi 60/180*pi] ;
 
 th2 = thi(2); th3 = thi(3); 
 x2 = x1 - param.l0*cos(th2); % center of segment, CHECK

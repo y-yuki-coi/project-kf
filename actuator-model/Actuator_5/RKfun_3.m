@@ -215,7 +215,7 @@ if 1 % 1: Mobility control
     for i = 1:3
         Fai(i) = Gi(i)*(dt_ld(i)-dt_l(i));
     end
-        
+    
     %Fa1 = Fai(1)*ex1;
     %Fa2 = Fai(2)*ex2;
     %Fa3 = Fai(3)*ex3;    
@@ -231,6 +231,16 @@ if 1 % 1: Mobility control
     Fa1 = -G1*(dt_ld(1)-dt_l1)*em1;    
     Fa2 = -G2*(dt_ld(2)-dt_l2)*em2;
     Fa3 = -G3*(dt_ld(3)-dt_l3)*em3;    
+    
+    Fa1 = -(vd_childa(:,1)-vi(:,1))*1000;
+    Fa2 = -(vd_childa(:,2)-vi(:,2))*1000;
+    Fa3 = -(vd_childa(:,3)-vi(:,3))*1000;
+    
+    Fa1 = -vd_childa(:,1)*1000;
+    Fa2 = -vd_childa(:,2)*1000;
+    Fa3 = -vd_childa(:,3)*1000;
+    
+    
 end
 
 % bipedal_model -----------------------------------------------------------------------------------

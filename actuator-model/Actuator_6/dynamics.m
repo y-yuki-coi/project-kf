@@ -4,6 +4,7 @@ function [dy,result]=dynamics(t,y,param,isRefresh)
 m1=param.mass(1);
 m2=param.mass(2);
 m3=param.mass(3);
+r1=param.r1;
 I1=param.I1;
 I2=param.I2;
 I3=param.I3;
@@ -16,8 +17,6 @@ kk2=param.kk(2);
 kk3=param.kk(3);
 bk2=param.bk(2);
 bk3=param.bk(3);
-bc1=param.bc;
-kc1=param.kc;
 ls2o=param.ls2o;
 ls3o=param.ls3o;
 phi12=param.phi12;
@@ -25,6 +24,11 @@ phi13=param.phi13;
 yg=param.yg;
 kg=param.kg;
 bg=param.bg;
+vdx = param.vdx;
+desiredHeight=param.desiredHeight;
+desiredHeightGain=param.desiredHeightGain;
+tipphi12=param.tipphi12;
+actuatorGain=param.actuatorGain;
 
 %rename state variables
 p12=y(1:2);
@@ -47,13 +51,13 @@ dth3 = y(24);
 %compute sensor values
 [ls2,dls2]=computeDistance(p2,p12,dp2,dp12);
 [ls3,dls3]=computeDistance(p3,p13,dp3,dp13);
-[q12,dq12]=computePositionByAngle(p12,ls2,th12+phi12,dp12,dls2,dth12);
-[q13,dq13]=computePositionByAngle(p13,ls3,th13+phi13,dp13,dls3,dth13);
-
+[q12,dq12]=computePositionByAngle(p12,ls2o/2,th12+phi12,dp12,dls2,dth12);
+[q13,dq13]=computePositionByAngle(p13,ls3o/2,th13+phi13,dp13,dls3,dth13);
 [lk2,dlk2]=computeDistance(p2,q12,dp2,dq12);
 [lk3,dlk3]=computeDistance(p3,q13,dp3,dq13);
 [lc1,dlc1]=computeDistance(p12,p13,dp12,dp13);
 
+[tip12,dtip12]=computePositionByAngle(p12,r1,th12+tipphi12,dp12,0,dth12);
 %compute interaction forces
 
 %natural length
@@ -62,28 +66,31 @@ dth3 = y(24);
 
 [Fs12]=computeInteractionForce(p2,p2n,dp2,dp2n,ks2,bs2);
 [Fs13]=computeInteractionForce(p3,p3n,dp3,dp3n,ks3,bs3);
-[Fc11]=computeInteractionForce(p12,p13,dp12,dq13,kc1,bc1);
-Fs12=[0;0];
-Fs13=[0;0];
-Fc11=[0;0];
+%[Fc11]=computeInteractionForce(p12,p13,dp12,dq13,kc1,bc1);
+%Fs12=[0;0];
+%Fs13=[0;0];
+%Fc11=[0;0];
 
 %[Fk12]=computeInteractionForce(p2,q12,dp2,dq12,kk2,bk2);
 %[Fk13]=computeInteractionForce(p3,q13,dp3,dq13,kk3,bk3);
 
-dk12 = rot90((q12-p12)/norm(q12-p12))';
-dk13 = rot90((q13-p13)/norm(q13-p13))';
+dk12 = rot2dVector((q12-p12)/norm(q12-p12),pi/2);
+dk13 = rot2dVector((q13-p13)/norm(q13-p13),pi/2);
 distk12=dk12'*(p2-q12);
 distk13=dk13'*(p3-q13);
 ddistk12=dk12'*(dp2-dq12);
 ddistk13=dk13'*(dp3-dq13);
-fk12=-kk2*distk12 - bk2*ddistk12;
-fk13=-kk3*distk13 - bk3*ddistk13;
+fk12=-kk2*distk12; %- bk2*ddistk12;
+fk13=-kk3*distk13; %- bk3*ddistk13;
 [Fk12]=fk12*dk12;
 [Fk13]=fk13*dk13;
 
 %compute interaction torques
-Tk12 = Fk12'*(q12-p12); %torque between base 12 and mass 2
-Tk13 = Fk13'*(q13-p13); %torque between base 13 and mass 3
+Tk12Vector = cross([Fk12;0],[(q12-p12);0]); %torque between base 12 and mass 2
+Tk13Vector = cross([Fk13;0],[(q13-p13);0]); %torque between base 13 and mass 3
+Tk12 = Tk12Vector(3);
+Tk13 = Tk13Vector(3);
+
 Tr11=0; %torque between base 12 and base 13
 %Tk12 = computeInteractionTorque(th2,th12,dth2,dth12,kk2,bk2);
 %Tk13 = computeInteractionTorque(th3,th13,dth3,dth13,kk3,bk3);
@@ -97,18 +104,29 @@ po2 = po2Refresh;
 po3 = po3Refresh;
 
 %compute control forces and torque
-Fa12 = [0;0];
-Fa13 = [0;0];
-Ta11 = 0;
+vd = [vdx; desiredHeightGain*(desiredHeight-p12(2))];
+[ex,vi] = computeKinematicValues(p12,p13,p2,p3,th12,th13,th2,th3, Fg2,Fg3,tip12);
+[vdchilda,km]=ComputeVdchilda( ex, vi, vd );
+
+Fa12 = actuatorGain(2)*vdchilda(:,2); %-0*(p12-p2);
+Fa13 = actuatorGain(3)*vdchilda(:,3); %-0*(p13-p3);
+
+%Fa12 = 20*ex(:,2);
+%Fa13 = 0*ex(:,3);
+
+omegad12Vector=cross([vdchilda(:,1);0], [tip12-p12;0])/norm(tip12-p12)^2;
+omegad12= omegad12Vector(3);
+%Ta11 = actuatorGain(1)*(omegad12-dth12);
+Ta11 = actuatorGain(1)*omegad12;
 
 %dynamics
-A = (m1*gg   -Fa12 -Fs12 + Fk12)/m1;
-B = (m1*gg   -Fa13 -Fs13 + Fk13)/m1;;
+A = (m1*gg   +Fa12 +Fs12 + Fk12)/m1;
+B = (m1*gg   +Fa13 +Fs13 + Fk13)/m1;;
 Fc11 = m1/2*(B-A);
-ddp12  = (m1*gg  +Fc11    -Fa12 -Fs12 +Fk12)/m1;
-ddp13  = (m1*gg  -Fc11    -Fa13 -Fs13 +Fk13)/m1;
-ddp2   = (m2*gg      +Fg2 +Fa12 +Fs12 -Fk12)/m2;
-ddp3   = (m3*gg      +Fg3 +Fa13 +Fs13 -Fk13)/m3;
+ddp12  = (m1*gg  +Fc11    +Fa12 +Fs12 +Fk12)/m1;
+ddp13  = (m1*gg  -Fc11    +Fa13 +Fs13 +Fk13)/m1;
+ddp2   = (m2*gg      +Fg2 -Fa12 -Fs12 -Fk12)/m2;
+ddp3   = (m3*gg      +Fg3 -Fa13 -Fs13 -Fk13)/m3;
 ddth12 = ( Tk12               -Ta11 )/I1;
 ddth13 = ( Tk13               +Ta11 )/I1;
 ddth2  = (-Tk12                    )/I2;
@@ -118,7 +136,6 @@ dy=[...
     dp12; dp13; dp2; dp3; dth12; dth13; dth2; dth3;...
     ddp12; ddp13; ddp2; ddp3; ddth12; ddth13; ddth2; ddth3...      
    ];
-
 
 %return results
 result.ddp12 = ddp12;
@@ -171,10 +188,19 @@ result.p3n = p3n;
 result.q12 = q12;
 result.q13 = q13;
 
+result.vd = vd;
+result.vdchilda = vdchilda;
+result.km = km;
+result.vi = vi;
+result.ex = ex;
+result.omegad12 = omegad12;
+
+result.tip12 = tip12;
+result.dtip12 = dtip12;
+
 result.param = param;
 
 end
-
 
 
 function [l,dl]=computeDistance(p,q,dp,dq)
@@ -204,7 +230,7 @@ end
 
 function F=computeInteractionForce(p,q,dp,dq,k,b)
     
-    F = -k*(p-q)-b*(dp-dq);
+    F = k*(p-q)-b*(dp-dq);
     
     %e=(p-q)/(norm(p-q));    
     %[l,dl]=computeDistance(p,q,dp,dq);    
@@ -230,6 +256,10 @@ function [position,dposition]=computePositionByAngle(origin,distance,alpha,dorig
     
 end
 
+function out=rot2dVector(in,alpha)
+    m=[cos(alpha) -sin(alpha);  sin(alpha) cos(alpha)];    
+    out = m*in;
+end
 
 function [Fg,poRefresh]=computeGroundReactionForce(p,dp,po,yg,kg,bg,isRefresh)
         
@@ -252,3 +282,36 @@ function [Fg,poRefresh]=computeGroundReactionForce(p,dp,po,yg,kg,bg,isRefresh)
     end
     
 end
+
+function [ex,vi] = computeKinematicValues(p12,p13,p2,p3,th12,th13,th2,th3,Fg2,Fg3,tip12);
+    
+%compute ex
+    x2 = p2(1);
+    x3 = p3(1);    
+    if x2 > x3
+        pfore = p2;
+        phind = p3;        
+        if norm(Fg2) > norm(Fg3)           
+            ex1 = (phind-pfore)/norm(phind-pfore);
+        else
+            ex1 = -(phind-pfore)/norm(phind-pfore);
+        end        
+    else
+        pfore = p3;
+        phind = p2;      
+        if norm(Fg2) > norm(Fg3)
+            ex1 = -(phind-pfore)/norm(phind-pfore);            
+        else
+            ex1 = (phind-pfore)/norm(phind-pfore);
+        end
+    end
+    ex(:,1) = rot2dVector((tip12-p12)/norm(tip12-p12),-pi/2); 
+    ex(:,2) = (p12-p2)/norm(p12-p2);
+    ex(:,3) = (p13-p3)/norm(p13-p3);
+    
+    %compute vi
+    vi(:,1) = ex1*0;
+    vi(:,2) = ex1*0;
+    vi(:,3) = ex1;
+end
+

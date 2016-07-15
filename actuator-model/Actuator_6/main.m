@@ -11,28 +11,31 @@ param.I2 = 1/2*param.mass(2)*(param.r2)^2;
 param.I3 = 1/2*param.mass(3)*(param.r3)^2;
 param.ks=[1;1;1]*10000;
 param.bs=[1;1;1]*100;
-param.kc=500000;
-param.bc=1000;
 param.mass=[48;11;11];
 param.gg=[0;-9.8];
 param.yg = 0;
 param.kg = 100000;
 param.bg = 100;
-param.ks=[1;1;1]*1000;
-param.bs=[1;1;1]*10;
 param.kk=[1;1;1]*10000;
 param.bk=[1;1;1]*100;
-param.kc=10000;
-param.bc=100;
+param.vdx = 1.0;
+param.desiredHeight = 1;
+param.desiredHeightGain = 10;
+param.actuatorGain = [10;10;10];%torque1,force2,force3
 
 %initial conditions
 po12 = [0;1.0];
 po13 = po12;
-tho2 =  120*pi/180;
-tho3 =   60*pi/180;
+tho12 = 30*pi/180;
+tho13 = -30*pi/180;
+tho2 = tho12;
+tho3 = tho13;
 lo = po12(2)*2/sqrt(3);
-po2 = po12 -lo*[cos(tho2); sin(tho2)];
-po3 = po13 -lo*[cos(tho3); sin(tho3)];
+
+phi12 = -pi/2;
+phi13 = -pi/2;
+po2 = po12 +lo*[cos(tho2+phi12); sin(tho2+phi12)];
+po3 = po13 +lo*[cos(tho3+phi13); sin(tho3+phi13)];
 
 param.ls2o=lo;
 param.ls3o=lo;
@@ -40,19 +43,21 @@ param.po12=po12;
 param.po13=po13;
 param.po2=po2;
 param.po3=po3;
+param.phi12 = phi12;
+param.phi13 = phi13;
 
-param.phi12 = tho2 + pi;
-param.phi13 = tho3 + pi;
+param.tipphi12 = pi/2;
+param.tipphi13 = pi/2;
 
 %simulator conditions
-param.simulator.timeSpan = [0:1e-04:0.3];
+param.simulator.timeSpan = [0:1e-04:1];
 param.simulator.h = 1e-04;
 %param.simulator.odeOptions = odeset('RelTol', 1e-4, 'AbsTol', 1e-4);
 
 %start simulation
 h   = param.simulator.h;
 timeSpan   = param.simulator.timeSpan;
-initialCondition = [po12; po13; po2; po3; 0;    0; 0; 0;...
+initialCondition = [po12; po13; po2; po3; tho12; tho13; tho2; tho3;...
                     0;0;  0;0;  0;0; 0;0; 0;    0; 0; 0];
 
 [y,result]=computeRungeKutta(timeSpan,initialCondition,param,h);
