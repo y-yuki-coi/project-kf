@@ -37,6 +37,7 @@ for t = 1:1:timeRange
     omegad12(t,:)=result(t).omegad12;
     
     vdchilda(t,:,:)=result(t).vdchilda;
+    vi(t,:,:)=result(t).vi;
     
     Fc11(t,:)=result(t).Fc11;
 end
@@ -182,7 +183,10 @@ for t=1:10:timeRange;%:10:timeRange
     
     plot( p2(t,1), p2(t,2), 'go');
     plot( p3(t,1), p3(t,2), 'bo');
-                    
+    
+    plot( p2n(t,1), p2n(t,2), 'g+');
+    plot( p3n(t,1), p3n(t,2), 'b+');
+    
     %line( [p12(t,1) p12(t,1)+Fc11(t,1)], [p12(t,2) p12(t,2)+Fc11(t,2)], ...
     %      'Color', 'k');
     %line( [p13(t,1) p13(t,1)-Fc11(t,1)], [p13(t,2) p13(t,2)-Fc11(t,2)], ...
@@ -228,13 +232,21 @@ for t=1:10:timeRange;%:10:timeRange
     %      'Color','b');     
     
     
-    line( [tip12(t,1) tip12(t,1)+vdchilda(t,1,1)], [tip12(t,2) tip12(t,2)+vdchilda(t,2,1)], ...
+    %line( [tip12(t,1) tip12(t,1)+vdchilda(t,1,1)], [tip12(t,2) tip12(t,2)+vdchilda(t,2,1)], ...
+    %      'Color','r');    
+    %line( [tip12(t,1) tip12(t,1)+vdchilda(t,1,2)], [tip12(t,2) tip12(t,2)+vdchilda(t,2,2)], ...
+    %      'Color','g');    
+    %line( [tip12(t,1) tip12(t,1)+vdchilda(t,1,3)], [tip12(t,2) tip12(t,2)+vdchilda(t,2,3)], ...
+    %      'Color','b');     
+    
+    line( [tip12(t,1) tip12(t,1)+vi(t,1,1)], [tip12(t,2) tip12(t,2)+vi(t,2,1)], ...
           'Color','r');    
-    line( [tip12(t,1) tip12(t,1)+vdchilda(t,1,2)], [tip12(t,2) tip12(t,2)+vdchilda(t,2,2)], ...
+    line( [tip12(t,1) tip12(t,1)+vi(t,1,2)], [tip12(t,2) tip12(t,2)+vi(t,2,2)], ...
           'Color','g');    
-    line( [tip12(t,1) tip12(t,1)+vdchilda(t,1,3)], [tip12(t,2) tip12(t,2)+vdchilda(t,2,3)], ...
-    'Color','b');     
-        
+    line( [tip12(t,1) tip12(t,1)+vi(t,1,3)], [tip12(t,2) tip12(t,2)+vi(t,2,3)], ...
+          'Color','b');     
+    
+    
     %line( [tip12(t,1) tip12(t,1)+ex(t,1,1)], [tip12(t,2) tip12(t,2)+ex(t,2,1)], ...
     %      'Color','r');    
     %line( [tip12(t,1) tip12(t,1)+ex(t,1,2)], [tip12(t,2) tip12(t,2)+ex(t,2,2)], ...

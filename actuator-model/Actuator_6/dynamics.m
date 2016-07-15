@@ -63,9 +63,9 @@ dth3 = y(24);
 %natural length
 [p2n,dp2n]=computePositionAtNaturalLength(p2,p12,dp2,dp12,ls2o);
 [p3n,dp3n]=computePositionAtNaturalLength(p3,p13,dp3,dp13,ls3o);
-
 [Fs12]=computeInteractionForce(p2,p2n,dp2,dp2n,ks2,bs2);
 [Fs13]=computeInteractionForce(p3,p3n,dp3,dp3n,ks3,bs3);
+
 %[Fc11]=computeInteractionForce(p12,p13,dp12,dq13,kc1,bc1);
 %Fs12=[0;0];
 %Fs13=[0;0];
@@ -105,19 +105,19 @@ po3 = po3Refresh;
 
 %compute control forces and torque
 vd = [vdx; desiredHeightGain*(desiredHeight-p12(2))];
-[ex,vi] = computeKinematicValues(p12,p13,p2,p3,th12,th13,th2,th3, Fg2,Fg3,tip12);
+[ex,vi] = computeKinematicValues(p12,p13,p2,p3,th12,th13,th2,th3,Fg2,Fg3,tip12,dp12,dp13,dp2,dp3,dth12,r1,dls2,dls3);
 [vdchilda,km]=ComputeVdchilda( ex, vi, vd );
 
-Fa12 = actuatorGain(2)*vdchilda(:,2); %-0*(p12-p2);
-Fa13 = actuatorGain(3)*vdchilda(:,3); %-0*(p13-p3);
+Fa12 = 0*actuatorGain(2)*(vdchilda(:,2)-vi(:,2)); %-0*(p12-p2);
+Fa13 = 0*actuatorGain(3)*(vdchilda(:,3)-vi(:,3)); %-0*(p13-p3);
 
 %Fa12 = 20*ex(:,2);
 %Fa13 = 0*ex(:,3);
 
 omegad12Vector=cross([vdchilda(:,1);0], [tip12-p12;0])/norm(tip12-p12)^2;
 omegad12= omegad12Vector(3);
-%Ta11 = actuatorGain(1)*(omegad12-dth12);
-Ta11 = actuatorGain(1)*omegad12;
+Ta11 = actuatorGain(1)*(omegad12-dth12);
+%Ta11 = actuatorGain(1)*omegad12;
 
 %dynamics
 A = (m1*gg   +Fa12 +Fs12 + Fk12)/m1;
@@ -127,8 +127,8 @@ ddp12  = (m1*gg  +Fc11    +Fa12 +Fs12 +Fk12)/m1;
 ddp13  = (m1*gg  -Fc11    +Fa13 +Fs13 +Fk13)/m1;
 ddp2   = (m2*gg      +Fg2 -Fa12 -Fs12 -Fk12)/m2;
 ddp3   = (m3*gg      +Fg3 -Fa13 -Fs13 -Fk13)/m3;
-ddth12 = ( Tk12               -Ta11 )/I1;
-ddth13 = ( Tk13               +Ta11 )/I1;
+ddth12 = ( Tk12               +Ta11 )/I1;
+ddth13 = ( Tk13               -Ta11 )/I1;
 ddth2  = (-Tk12                    )/I2;
 ddth3  = (-Tk13                    )/I3;
 
@@ -228,6 +228,16 @@ function [pn,dpn]=computePositionAtNaturalLength(p,q,dp,dq,lo)
 end
 
 
+function F=computeInteractionForce2(p,q,dp,dq,k,b,lo)
+    
+    e=(p-q)/(norm(p-q));    
+    
+    F=k*((p-q)-l0*e) -b*(p-q)/norm(p-q)*(dp-dq)
+
+    
+end
+
+
 function F=computeInteractionForce(p,q,dp,dq,k,b)
     
     F = k*(p-q)-b*(dp-dq);
@@ -283,7 +293,7 @@ function [Fg,poRefresh]=computeGroundReactionForce(p,dp,po,yg,kg,bg,isRefresh)
     
 end
 
-function [ex,vi] = computeKinematicValues(p12,p13,p2,p3,th12,th13,th2,th3,Fg2,Fg3,tip12);
+function [ex,vi] = computeKinematicValues(p12,p13,p2,p3,th12,th13,th2,th3,Fg2,Fg3,tip12,dp12,dp13,dp2,dp3,dth12,r1,dls2,dls3);
     
 %compute ex
     x2 = p2(1);
@@ -310,8 +320,8 @@ function [ex,vi] = computeKinematicValues(p12,p13,p2,p3,th12,th13,th2,th3,Fg2,Fg
     ex(:,3) = (p13-p3)/norm(p13-p3);
     
     %compute vi
-    vi(:,1) = ex1*0;
-    vi(:,2) = ex1*0;
-    vi(:,3) = ex1;
+    vi(:,1) = dth12*r1*ex(:,1);
+    vi(:,2) = dls2*ex(:,2);
+    vi(:,3) = dls3*ex(:,3);
 end
 
