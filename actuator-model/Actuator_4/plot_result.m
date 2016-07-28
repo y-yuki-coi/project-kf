@@ -9,6 +9,7 @@ for t = 1:1:timeRange
     Flim1(t,:)=result(t).Flim1;
     Flim2(t,:)=result(t).Flim2;
     Flim3(t,:)=result(t).Flim3;
+%     Flimb(t,:)=result(t).Flimb;
     Fai(t,:)=result(t).Fai;
     Fg2(t,:)=result(t).Fg2;
     Fg3(t,:)=result(t).Fg3;
@@ -32,14 +33,17 @@ for t = 1:1:timeRange
     dt_ld1(t,:)=result(t).dt_ld(:,1);
     dt_ld2(t,:)=result(t).dt_ld(:,2);
     dt_ld3(t,:)=result(t).dt_ld(:,3);
+    vd_childa1(t,:)=result(t).vd_childa(:,1);
+    vd_childa2(t,:)=result(t).vd_childa(:,2);
+    vd_childa3(t,:)=result(t).vd_childa(:,3);
     
     km(t,:)=result(t).km';   
-    kf(t,:)=result(t).kf';   
+%     kf(t,:)=result(t).kf';   
 end
 time=((1:1:timeRange)*result(1).param.simulator.h)';
 
 %now start plotting
-
+int = 1:2000 ;
 if 0
 figure
 hold on
@@ -47,6 +51,11 @@ plot(xx1(:,1),xx1(:,2),'r-');
 plot(xx2(:,1),xx2(:,2),'g-');
 plot(xx3(:,1),xx3(:,2),'b-');
 axis equal
+
+% figure
+% hold on
+% plot(xx02(:,1),'g-');
+% plot(xx03(:,1),'b-');
 
 figure
 hold on
@@ -57,18 +66,18 @@ title('Flim');
 
 figure
 hold on
-plot(time,Fg2(:,1).^2 + Fg2(:,1).^2,'g-');
-plot(time,Fg3(:,1).^2 + Fg3(:,1).^2,'b-');
+plot(time(int),Fg2(int,1).^2 + Fg2(int,1).^2,'g-');
+plot(time(int),Fg3(int,1).^2 + Fg3(int,1).^2,'b-');
 title('Fg');
 
 figure
 hold on
+% plot(time,sqrt(Fa1(:,1).^2 + Fa1(:,2).^2),'r-');
+% plot(time,sqrt(Fa2(:,1).^2 + Fa2(:,1).^2),'g-');
+% plot(time,sqrt(Fa3(:,1).^2 + Fa3(:,1).^2),'b-');
 plot(time,Fai(:,1),'r-');
 plot(time,Fai(:,2),'g-');
 plot(time,Fai(:,3),'b-');
-% plot(time,Fa1(:,1).^2 + Fa1(:,1).^2,'r-');
-% plot(time,Fa2(:,1).^2 + Fa2(:,1).^2,'g-');
-% plot(time,Fa3(:,1).^2 + Fa3(:,1).^2,'b-');
 title('Fa');
 
 figure
@@ -103,9 +112,24 @@ title('dt_ld');
 figure
 hold on
 plot(time,l1,'r-');
-plot(time,l2,'g-');
+plot(time,l2,'g-')
 plot(time,l3,'b-');
 title('l');
+
+figure
+hold on
+plot(time,vd_childa1(:,1),'r-');
+plot(time,vd_childa2(:,1),'g-');
+plot(time,vd_childa3(:,1),'b-');
+title('vd_childa');
+
+figure
+hold on
+% plot(time,ex1,'r-');
+% plot(time,ex2,'g-');
+plot(time,ex3(:,1),'b-');
+plot(time,ex3(:,2),'b:');
+title('ex');
 end
 
 if 0
@@ -151,7 +175,7 @@ figure;
 if 1
 figure(1)
 set(gcf,'Color',[1 1 1]) ;
-skip = 50 ;
+skip = 100 ;
 nn = 1 ; % mov index
 videoPointer = VideoWriter('test.avi');
 open(videoPointer)
@@ -159,7 +183,7 @@ open(videoPointer)
 clr_1 = {'k','r','b'} ; clr_2 = {'r','b';'k','b';'k','r'} ;
 dev_1 = [0 -0.1; 0.1 0;-0.1 0];
 a_f = 0.0005 ;
-for t = 1:skip:t%length(time) 
+for t = 1:skip:length(time) %7%
     xit = xi(t,:); 
     plot(xit([1 3]),xit([2 4]),'ko:',xit([1 5]),xit([2 6]),'ko:',xit([3 5]),xit([4 6]),'ko:'); hold on;
     vdl(1,:) = vdl1(t,:); vdl(2,:) = vdl2(t,:); vdl(3,:) = vdl3(t,:);
@@ -171,18 +195,19 @@ for t = 1:skip:t%length(time)
     Fait(1,:) = a_f*Fa1(t,:) ; Fait(2,:) = a_f*Fa2(t,:) ; Fait(3,:) = a_f*Fa3(t,:) ;
     for i = 1:3
         quiver(xit(2*i-1),xit(2*i),vdl(i,1),vdl(i,2),0.1,'color',clr_1{i})
-        quiver(xit(2*i-1),xit(2*i),vdc(1,1,i),vdc(2,1,i),0.1,'color',clr_2{i,1})
-        quiver(xit(2*i-1),xit(2*i),vdc(1,2,i),vdc(2,2,i),0.1,'color',clr_2{i,2})
-        quiver(xi2(i,1)+dev_1(i,1),xi2(i,2)+dev_1(i,2),Fait(i,1),Fait(i,2),0.1,'color','k')
-        quiver(xi2(i,3)+dev_1(i,1),xi2(i,4)+dev_1(i,2),-Fait(i,1),-Fait(i,2),0.1,'color','k')
+%         quiver(xit(2*i-1),xit(2*i),vdc(1,1,i),vdc(2,1,i),0.1,'color',clr_2{i,1})
+%         quiver(xit(2*i-1),xit(2*i),vdc(1,2,i),vdc(2,2,i),0.1,'color',clr_2{i,2})
+        quiver(xi2(i,1)+dev_1(i,1),xi2(i,2)+dev_1(i,2),-Fait(i,1),-Fait(i,2),0.1,'color','k')
+        quiver(xi2(i,3)+dev_1(i,1),xi2(i,4)+dev_1(i,2),Fait(i,1),Fait(i,2),0.1,'color','k')
     end
     line([-10 10],[0 0],'color','k');
     axis equal
-    xlim([-1 3]) ;
+%     xlim([-1 3]) ;
     ylim([-0.5 2]) ; 
+    xlim([-5 5]) ; 
     hold off ;
-    title(sprintf('time = %0.2f (s) km1 = %0.2f km2 = %0.2f km3 = %0.2f kf1 = %0.2f kf2 = %0.2f kf3 = %0.2f',time(t),...
-        km(t,1),km(t,2),km(t,3),kf(t,1),kf(t,2),kf(t,3)),'fontsize',7);
+    title(sprintf('time = %0.2f (s) km1 = %0.2f km2 = %0.2f km3 = %0.2f ',time(t),...
+        km(t,1),km(t,2),km(t,3)),'fontsize',7); % kf1 = %0.2f kf2 = %0.2f kf3 = %0.2f ,kf(t,1),kf(t,2),kf(t,3)
     set(gca,'fontsize',10) ;
     frame = getframe(gcf);
     writeVideo(videoPointer,frame);                    

@@ -1,13 +1,10 @@
 % Actuator_Mobility_4_160617.m
 % 粒子モデルで二足移動を再現
 % Fujii & Yoshihara, coded by Fujii
-clear; close all;
+clear all; close all; %#ok<CLALL> % 
 
 % Parameters
 % Gi = [1000 10000 10000 1000 6000 6000] ; % Feedback gain zeros(6,1);%  
-% kkf = 1 ; 
-
-% Parameters
 param.gg = [0;-9.8];
 param.k_leg21 = 5000; % air
 param.k_leg31 = 5000;
@@ -30,6 +27,7 @@ param.G3 = 5000;
 param.vdx = 2; % desired speed m/s
 param.ckf = 0.5; % ratio of km control to kf control（追加）
 param.desiredHeight = 1; % now testing
+param.desiredHeightGain = 1; % now testing
 param.yg = 0.00; % terrain (horizontal)
 param.kg = 100000; % 大きめに変更
 param.bg = 100;
@@ -43,13 +41,17 @@ param.llim1=param.l0*1.1;
 param.llim2=param.l0*1.1;
 param.llim3=param.l0*1.1;
 param.simulator.h = 1e-03;
+param.simulator.maxItr = 5000;
 
 %rename params
 h = param.simulator.h;
+maxItr = param.simulator.maxItr;
 
-% Initial condition 初期姿勢を歩かせやすい姿勢に変える？（なぜか動き出したので保留）--------------------------
+% Initial condition 脚を入れ替える、方向を逆にしても同じ動作になるか確認
+% 初期姿勢を歩かせやすい姿勢に変える？（なぜか動き出したので保留）--------------------------
 y_contact = zeros(2,16) ; % xi & initial and contact
 x1 = 0 ; y1 = param.y01 ; % initial position for gait
+% thi = [0 120/180*pi 60/180*pi] ;
 thi = [0 60/180*pi 120/180*pi] ;
 th2 = thi(2); th3 = thi(3); 
 x2 = x1 - param.l0*cos(th3); % center of segment, CHECK
@@ -68,12 +70,15 @@ end
 if 1
     Y = [xi zeros(1,6)] ; % dt_xi(9)
     tic;
-    iter =2000 ;
+    iter =maxItr; 
     Y = [Y;zeros(iter,12)]; 
     for t = 1:iter
         [Y(t+1,:) result(t,:)] = fun_Actuator(t,Y(t,:),param,h); 
+        if isnan(Y(t+1,7)); t
+            break 
+        end
         if mod(t,1000)==0; 
-            t
+            t 
         end
     end
     time = h:h:(iter+1)*h ;
